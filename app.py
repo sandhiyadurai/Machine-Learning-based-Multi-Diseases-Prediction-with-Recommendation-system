@@ -31,7 +31,7 @@ st.markdown("""
         background-attachment: fixed;
         min-height: 100vh;
         position: relative;
-        label, span, div {
+        label, span {
         color: black !important;
     }
     
@@ -695,6 +695,7 @@ st.markdown("""
     <p style="font-size: 0.8rem;">⚠️ Not a substitute for professional medical advice</p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
