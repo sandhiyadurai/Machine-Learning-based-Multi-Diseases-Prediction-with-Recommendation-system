@@ -34,7 +34,7 @@ st.markdown("""
         position: relative;
         label, span,div {
         color: black !important;
-        div[data-testid="stVerticalBlock"] {
+        section[data-testid="stSidebar"] {
         background-color: white;
     }
     
@@ -698,6 +698,7 @@ st.markdown("""
     <p style="font-size: 0.8rem;">⚠️ Not a substitute for professional medical advice</p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
