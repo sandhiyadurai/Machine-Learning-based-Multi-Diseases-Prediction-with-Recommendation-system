@@ -17,17 +17,9 @@ st.markdown("""
 <style>
     /* Clean white background with blue mixture */
     .stApp {
-        background:
-            radial-gradient(circle at 30% 20%, rgba(135, 206, 235, 0.15) 0%, transparent 50%),
-            radial-gradient(circle at 70% 80%, rgba(70, 130, 180, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 50% 50%, rgba(176, 196, 222, 0.08) 0%, transparent 50%),
-            linear-gradient(135deg,
-                #ffffff 0%,
-                #f8f9fa 25%,
-                #e3f2fd 50%,
-                #f8f9fa 75%,
-                #ffffff 100%
-            );
+        background:white;
+            
+    
             
         background-attachment: fixed;
         min-height: 100vh;
@@ -703,6 +695,7 @@ st.markdown("""
     <p style="font-size: 0.8rem;">⚠️ Not a substitute for professional medical advice</p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
