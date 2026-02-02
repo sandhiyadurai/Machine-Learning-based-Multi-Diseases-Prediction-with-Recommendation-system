@@ -52,4 +52,23 @@ Each disease uses a **separate trained machine learning model** for better accur
 ---
 
 ## 📂 Project Structure
+project/
+│
+├── app.py
+├── requirements.txt
+│
+├── model/
+│ ├── diabetes_model.pkl
+│ ├── heart_disease_model.pkl
+│ ├── liver_disease_model.pkl
+│ └── parkinsons_model.pkl
+│
+├── dataset/
+├── train_heart_disease.py
+├── train_liver_disease.py
+├── train_parkinsons.py
 
+⚠️ Disclaimer
+
+This application is developed for academic and learning purposes only.
+It should not be used as a replacement for professional medical diagnosis or treatment.
