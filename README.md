@@ -51,22 +51,29 @@ Each disease uses a **separate trained machine learning model** for better accur
 
 ---
 
-## 📂 Project Structure
-project/
-│
+<h2>📂 Project Structure</h2>
+
+<pre>
+Multi_Disease_Prediction/
 ├── app.py
 ├── requirements.txt
-│
 ├── model/
-│ ├── diabetes_model.pkl
-│ ├── heart_disease_model.pkl
-│ ├── liver_disease_model.pkl
-│ └── parkinsons_model.pkl
-│
+│   ├── diabetes_model.pkl
+│   ├── heart_disease_model.pkl
+│   ├── liver_disease_model.pkl
+│   └── parkinsons_model.pkl
 ├── dataset/
+│   ├── diabetes.csv
+│   ├── heart.csv
+│   ├── liver.csv
+│   └── parkinsons.csv
 ├── train_heart_disease.py
 ├── train_liver_disease.py
 ├── train_parkinsons.py
+└── README.md
+</pre>
+
+
 
 ⚠️ Disclaimer
 
