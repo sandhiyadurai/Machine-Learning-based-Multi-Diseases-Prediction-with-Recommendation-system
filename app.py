@@ -36,6 +36,7 @@ st.markdown("""
         color: black !important;
         section[data-testid="stSidebar"] {
         background-color: white;
+        
     }
     
 
@@ -100,7 +101,7 @@ st.markdown("""
 
     /* Specific element color adaptations */
     .main-header {
-        color: #000000; /* Dark text on light main container */
+        color: white0; /* Dark text on light main container */
         text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         transition: all 0.3s ease;
     }
@@ -698,6 +699,7 @@ st.markdown("""
     <p style="font-size: 0.8rem;">⚠️ Not a substitute for professional medical advice</p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
