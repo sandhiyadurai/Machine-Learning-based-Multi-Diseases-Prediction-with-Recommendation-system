@@ -131,7 +131,7 @@ st.markdown("""
 
     .symptom-tag {
         background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-        color: #1976d2;
+        color: black;
         padding: 0.5rem 1rem;
         border-radius: 25px;
         margin: 0.25rem;
@@ -692,4 +692,5 @@ st.markdown("""
     <p style="font-size: 0.8rem;">⚠️ Not a substitute for professional medical advice</p>
 </div>
 """, unsafe_allow_html=True)
+
 
