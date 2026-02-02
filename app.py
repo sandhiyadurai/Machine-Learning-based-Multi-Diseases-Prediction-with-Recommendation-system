@@ -100,6 +100,10 @@ st.markdown("""
     }
 
     /* Specific element color adaptations */
+     .header {  /* or specific class from inspect */
+          background-color: white !important;  /* makes the header background white, overrides other styles */
+          color: black;  /* makes the text inside the header black for readability */
+    }
     .main-header {
         color: white; /* Dark text on light main container */
         text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
@@ -699,6 +703,7 @@ st.markdown("""
     <p style="font-size: 0.8rem;">⚠️ Not a substitute for professional medical advice</p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
