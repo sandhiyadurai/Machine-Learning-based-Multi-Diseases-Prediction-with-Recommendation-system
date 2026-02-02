@@ -115,7 +115,7 @@ st.markdown("""
 
     .disease-card {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white; /* Light text on colored background */
+        color: black; /* Light text on colored background */
         padding: 1.5rem;
         border-radius: 15px;
         margin: 1rem 0;
@@ -692,3 +692,4 @@ st.markdown("""
     <p style="font-size: 0.8rem;">⚠️ Not a substitute for professional medical advice</p>
 </div>
 """, unsafe_allow_html=True)
+
