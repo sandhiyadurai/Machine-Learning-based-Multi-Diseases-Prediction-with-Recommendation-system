@@ -856,8 +856,8 @@ if disease_predicted:
             
             st.markdown("</div></div>", unsafe_allow_html=True)
 
-         else:
-            st.error("❌ Please fill in all the required medical parameters before making a prediction.")
+    else:
+        st.error("❌ Please fill in all the required medical parameters before making a prediction.")
 
 else:
     if selected_symptoms:
