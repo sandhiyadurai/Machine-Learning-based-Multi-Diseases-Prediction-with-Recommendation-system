@@ -792,7 +792,6 @@ if disease_predicted:
             st.session_state["flagged_fields"] = set()
             with st.spinner("🔄 Analyzing your data..."):
                 time.sleep(1.5)
-
             cols     = MODEL_FEATURES[disease_predicted]
             input_df = pd.DataFrame([[numeric_inputs[c] for c in cols]], columns=cols)
 
