@@ -848,8 +848,6 @@ if disease_predicted:
                 time.sleep(1.5)
             cols     = MODEL_FEATURES[disease_predicted]
             input_df = pd.DataFrame([[numeric_inputs[c] for c in cols]], columns=cols)
-
-            input_df = pd.DataFrame([numeric_inputs])[MODEL_FEATURES[disease_predicted]]
             prediction = model.predict(input_df)
             prediction_proba = model.predict_proba(input_df)[0]
 
