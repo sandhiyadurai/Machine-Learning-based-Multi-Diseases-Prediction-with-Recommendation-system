@@ -401,6 +401,18 @@ st.markdown("""
     .sidebar h1, .sidebar h2, .sidebar h3, .sidebar h4 {
         color: #000000 !important;
     }
+
+    /* Error field highlighting */
+    .error-field .stNumberInput {
+        background-color: #b71c1c !important;
+        border: 2px solid #d32f2f !important;
+        border-radius: 5px;
+        color: white !important;
+    }
+    .error-field .stNumberInput input {
+        background-color: #b71c1c !important;
+        color: white !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -437,6 +449,7 @@ MODEL_FEATURES = {
         "NHR", "HNR", "RPDE", "DFA", "Spread1", "Spread2", "D2", "PPE"
     ]
 }
+
 
 ZERO_OK = {
     "Pregnancies", "SkinThickness", "Insulin", "oldpeak", "ca",
@@ -491,6 +504,16 @@ def show_missing_banner(missing_keys):
         <div style="display:flex; flex-wrap:wrap; gap:0.4rem;">{pills}</div>
     </div>
     """, unsafe_allow_html=True)
+
+def create_number_input(key, label, min_val, max_val, help=None, step=None):
+    if key in st.session_state.get("flagged_fields", set()):
+        st.markdown('<div class="error-field">', unsafe_allow_html=True)
+        val = st.number_input(label, min_val, max_val, help=help, step=step)
+        st.markdown('</div>', unsafe_allow_html=True)
+    else:
+        val = st.number_input(label, min_val, max_val, help=help, step=step)
+    return val
+
 # Disease recommendations with more detailed advice
 recommendations = {
     "Diabetes": {
@@ -702,69 +725,81 @@ if disease_predicted:
 
         col1, col2 = st.columns(2)
         with col1:
-            numeric_inputs["Pregnancies"] = st.number_input("Number of Pregnancies", 0, 20, help="Number of times pregnant")
-            numeric_inputs["Glucose"] = st.number_input("Glucose Level (mg/dL)", 0, 200, help="Plasma glucose concentration")
-            numeric_inputs["BloodPressure"] = st.number_input("Blood Pressure (mm Hg)", 0, 140, help="Diastolic blood pressure")
-            numeric_inputs["SkinThickness"] = st.number_input("Skin Thickness (mm)", 0, 100, help="Triceps skin fold thickness")
+            numeric_inputs["Pregnancies"] = create_number_input("Pregnancies", "Number of Pregnancies", 0, 20, help="Number of times pregnant")
+            numeric_inputs["Glucose"] = create_number_input("Glucose", "Glucose Level (mg/dL)", 0, 200, help="Plasma glucose concentration")
+            numeric_inputs["BloodPressure"] = create_number_input("BloodPressure", "Blood Pressure (mm Hg)", 0, 140, help="Diastolic blood pressure")
+            numeric_inputs["SkinThickness"] = create_number_input("SkinThickness", "Skin Thickness (mm)", 0, 100, help="Triceps skin fold thickness")
 
         with col2:
-            numeric_inputs["Insulin"] = st.number_input("Insulin Level (mu U/ml)", 0, 900, help="2-Hour serum insulin")
-            numeric_inputs["BMI"] = st.number_input("BMI", 0.0, 70.0, help="Body mass index")
-            numeric_inputs["DiabetesPedigreeFunction"] = st.number_input("Diabetes Pedigree Function", 0.0, 3.0, help="Diabetes pedigree function")
-            numeric_inputs["Age"] = st.number_input("Age (years)", 1, 120, help="Age in years")
+            numeric_inputs["Insulin"] = create_number_input("Insulin", "Insulin Level (mu U/ml)", 0, 900, help="2-Hour serum insulin")
+            numeric_inputs["BMI"] = create_number_input("BMI", "BMI", 0.0, 70.0, help="Body mass index")
+            numeric_inputs["DiabetesPedigreeFunction"] = create_number_input("DiabetesPedigreeFunction", "Diabetes Pedigree Function", 0.0, 3.0, help="Diabetes pedigree function")
+            numeric_inputs["Age"] = create_number_input("Age", "Age (years)", 1, 120, help="Age in years")
 
     elif disease_predicted == "Heart Disease":
         st.markdown("**Please provide the following cardiac measurements:**")
 
         col1, col2 = st.columns(2)
         with col1:
-            numeric_inputs["Age"] = st.number_input("Age (years)", 1, 120)
-            numeric_inputs["Sex"] = st.selectbox("Sex", ["Male", "Female"])
-            numeric_inputs["Chest pain type"] = st.selectbox("Chest Pain Type", ["Typical Angina", "Atypical Angina", "Non-anginal Pain", "Asymptomatic"])
-            numeric_inputs["BP"] = st.number_input("Resting Blood Pressure (mm Hg)", 0, 200)
-            numeric_inputs["Cholesterol"] = st.number_input("Cholesterol Level (mg/dL)", 0, 600)
+            numeric_inputs["Age"] = create_number_input("Age", "Age (years)", 1, 120)
+            numeric_inputs["Sex"] = st.selectbox("Sex", ["Male", "Female"], help="Biological sex")
+            numeric_inputs["Chest pain type"] = st.selectbox("Chest Pain Type", [
+                "Typical Angina", "Atypical Angina", "Non-anginal Pain", "Asymptomatic"
+            ], help="Type of chest pain experienced")
+            numeric_inputs["BP"] = create_number_input("BP", "Resting Blood Pressure (mm Hg)", 0, 200, help="Resting blood pressure")
+            numeric_inputs["Cholesterol"] = create_number_input("Cholesterol", "Cholesterol Level (mg/dL)", 0, 600, help="Serum cholesterol")
+            numeric_inputs["FBS over 120"] = st.selectbox("Fasting Blood Sugar > 120 mg/dl", ["No", "Yes"], help="Fasting blood sugar > 120 mg/dl")
+            numeric_inputs["EKG results"] = st.selectbox("Resting ECG Results", [
+                "Normal", "ST-T wave abnormality", "Left ventricular hypertrophy"
+            ], help="Resting electrocardiographic results")
 
         with col2:
-            numeric_inputs["FBS over 120"] = st.selectbox("Fasting Blood Sugar > 120 mg/dl", ["No", "Yes"])
-            numeric_inputs["EKG results"] = st.selectbox("Resting ECG Results", ["Normal", "ST-T wave abnormality", "Left ventricular hypertrophy"])
-            numeric_inputs["Max HR"] = st.number_input("Max Heart Rate Achieved", 0, 250)
-            numeric_inputs["Exercise angina"] = st.selectbox("Exercise Induced Angina", ["No", "Yes"])
-            numeric_inputs["ST depression"] = st.number_input("ST Depression", 0.0, 10.0)
-
-        col3, col4 = st.columns(2)
-        with col3:
-            numeric_inputs["Slope of ST"] = st.selectbox("Slope of Peak Exercise ST Segment", ["Upsloping", "Flat", "Downsloping"])
-            numeric_inputs["Number of vessels fluro"] = st.number_input("Number of Major Vessels", 0, 3)
-
-        with col4:
-            numeric_inputs["Thallium"] = st.selectbox("Thalassemia", ["Normal", "Fixed defect", "Reversible defect"])
+            numeric_inputs["Max HR"] = create_number_input("Max HR", "Max Heart Rate Achieved", 0, 250, help="Maximum heart rate achieved")
+            numeric_inputs["Exercise angina"] = st.selectbox("Exercise Induced Angina", ["No", "Yes"], help="Exercise induced angina")
+            numeric_inputs["ST depression"] = create_number_input("ST depression", "ST Depression", 0.0, 10.0, help="ST depression induced by exercise")
+            numeric_inputs["Slope of ST"] = st.selectbox("Slope of Peak Exercise ST Segment", [
+                "Upsloping", "Flat", "Downsloping"
+            ], help="Slope of the peak exercise ST segment")
+            numeric_inputs["Number of vessels fluro"] = create_number_input("Number of vessels fluro", "Number of Major Vessels", 0, 3, help="Number of major vessels colored by fluoroscopy")
+            numeric_inputs["Thallium"] = st.selectbox("Thalassemia", [
+                "Normal", "Fixed defect", "Reversible defect"
+            ], help="Thalassemia status")
 
         # Convert categorical inputs to numeric
-        numeric_inputs["Sex"]              = {"Male": 1, "Female": 0}[numeric_inputs["Sex"]]
-        numeric_inputs["Chest pain type"]  = {"Typical Angina": 1, "Atypical Angina": 2, "Non-anginal Pain": 3, "Asymptomatic": 4}[numeric_inputs["Chest pain type"]]
-        numeric_inputs["FBS over 120"]     = {"No": 0, "Yes": 1}[numeric_inputs["FBS over 120"]]
-        numeric_inputs["EKG results"]      = {"Normal": 0, "ST-T wave abnormality": 1, "Left ventricular hypertrophy": 2}[numeric_inputs["EKG results"]]
-        numeric_inputs["Exercise angina"]  = {"No": 0, "Yes": 1}[numeric_inputs["Exercise angina"]]
-        numeric_inputs["Slope of ST"]      = {"Upsloping": 1, "Flat": 2, "Downsloping": 3}[numeric_inputs["Slope of ST"]]
-        numeric_inputs["Thallium"]         = {"Normal": 3, "Fixed defect": 6, "Reversible defect": 7}[numeric_inputs["Thallium"]]
+        sex_map = {"Male": 1, "Female": 0}
+        cp_map = {"Typical Angina": 4, "Atypical Angina": 3, "Non-anginal Pain": 2, "Asymptomatic": 1}
+        fbs_map = {"No": 0, "Yes": 1}
+        restecg_map = {"Normal": 0, "ST-T wave abnormality": 1, "Left ventricular hypertrophy": 2}
+        exang_map = {"No": 0, "Yes": 1}
+        slope_map = {"Upsloping": 1, "Flat": 2, "Downsloping": 3}
+        thal_map = {"Normal": 3, "Fixed defect": 6, "Reversible defect": 7}
+
+        numeric_inputs["Sex"] = sex_map[numeric_inputs["Sex"]]
+        numeric_inputs["Chest pain type"] = cp_map[numeric_inputs["Chest pain type"]]
+        numeric_inputs["FBS over 120"] = fbs_map[numeric_inputs["FBS over 120"]]
+        numeric_inputs["EKG results"] = restecg_map[numeric_inputs["EKG results"]]
+        numeric_inputs["Exercise angina"] = exang_map[numeric_inputs["Exercise angina"]]
+        numeric_inputs["Slope of ST"] = slope_map[numeric_inputs["Slope of ST"]]
+        numeric_inputs["Thallium"] = thal_map[numeric_inputs["Thallium"]]
+
 
     elif disease_predicted == "Liver Disease":
         st.markdown("**Please provide the following liver function test results:**")
 
         col1, col2 = st.columns(2)
         with col1:
-            numeric_inputs["Age"] = st.number_input("Age (years)", 1, 120)
+            numeric_inputs["age"] = create_number_input("age", "Age (years)", 1, 120)
             numeric_inputs["Gender"] = st.selectbox("Gender", ["Male", "Female"])
-            numeric_inputs["Total_Bilirubin"] = st.number_input("Total Bilirubin (mg/dL)", 0.0, 20.0, help="Total bilirubin level")
-            numeric_inputs["Direct_Bilirubin"] = st.number_input("Direct Bilirubin (mg/dL)", 0.0, 10.0, help="Direct bilirubin level")
-            numeric_inputs["Alkaline_Phosphate"] = st.number_input("Alkaline Phosphate (IU/L)", 0, 500, help="Alkaline phosphatase level")
+            numeric_inputs["Total_Bilirubin"] = create_number_input("Total_Bilirubin", "Total Bilirubin (mg/dL)", 0.0, 20.0, help="Total bilirubin level")
+            numeric_inputs["Direct_Bilirubin"] = create_number_input("Direct_Bilirubin", "Direct Bilirubin (mg/dL)", 0.0, 10.0, help="Direct bilirubin level")
+            numeric_inputs["Alkaline_Phosphate"] = create_number_input("Alkaline_Phosphate", "Alkaline Phosphate (IU/L)", 0, 500, help="Alkaline phosphatase level")
 
         with col2:
-            numeric_inputs["SGPT"] = st.number_input("SGPT/ALT (IU/L)", 0, 500, help="Serum glutamic pyruvic transaminase")
-            numeric_inputs["SGOT"] = st.number_input("SGOT/AST (IU/L)", 0, 500, help="Serum glutamic oxaloacetic transaminase")
-            numeric_inputs["Total_Protiens"] = st.number_input("Total Protein (g/dL)", 0.0, 15.0, help="Total protein level")
-            numeric_inputs["Albumin"] = st.number_input("Albumin (g/dL)", 0.0, 10.0, help="Albumin level")
-            numeric_inputs["A/G_Ratio"] = st.number_input("Albumin/Globulin Ratio", 0.0, 3.0, help="Albumin to globulin ratio")
+            numeric_inputs["SGPT"] = create_number_input("SGPT", "SGPT/ALT (IU/L)", 0, 500, help="Serum glutamic pyruvic transaminase")
+            numeric_inputs["SGOT"] = create_number_input("SGOT", "SGOT/AST (IU/L)", 0, 500, help="Serum glutamic oxaloacetic transaminase")
+            numeric_inputs["Total_Protiens"] = create_number_input("Total_Protiens", "Total Protein (g/dL)", 0.0, 15.0, help="Total protein level")
+            numeric_inputs["Albumin"] = create_number_input("Albumin", "Albumin (g/dL)", 0.0, 10.0, help="Albumin level")
+            numeric_inputs["A/G_Ratio"] = create_number_input("A/G_Ratio", "Albumin/Globulin Ratio", 0.0, 3.0, help="Albumin to globulin ratio")
 
         # Convert gender to numeric
         gender_map = {"Male": 1, "Female": 0}
@@ -774,44 +809,32 @@ if disease_predicted:
         st.markdown("**Please provide the following voice analysis measurements:**")
         st.info("💡 These measurements typically come from specialized voice analysis software used by neurologists.")
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns(2)
         with col1:
-            st.markdown("**Fundamental Frequency**")
-            numeric_inputs["MDVP:Fo(Hz)"] = st.number_input("MDVP:Fo(Hz)", 0.0, 500.0)
-            numeric_inputs["MDVP:Fhi(Hz)"] = st.number_input("MDVP:Fhi(Hz)", 0.0, 500.0)
-            numeric_inputs["MDVP:Flo(Hz)"] = st.number_input("MDVP:Flo(Hz)", 0.0, 500.0)
+            numeric_inputs["MDVP:Fo(Hz)"] = create_number_input("MDVP:Fo(Hz)", "MDVP:Fo(Hz)", 0.0, 500.0)
+            numeric_inputs["MDVP:Fhi(Hz)"] = create_number_input("MDVP:Fhi(Hz)", "MDVP:Fhi(Hz)", 0.0, 500.0)
+            numeric_inputs["MDVP:Flo(Hz)"] = create_number_input("MDVP:Flo(Hz)", "MDVP:Flo(Hz)", 0.0, 500.0)
+            numeric_inputs["MDVP:Jitter(%)"] = create_number_input("MDVP:Jitter(%)", "Jitter(%)", 0.0, 1.0)
+            numeric_inputs["MDVP:Jitter(Abs)"] = create_number_input("MDVP:Jitter(Abs)", "Jitter(Abs)", 0.0, 1.0)
+            numeric_inputs["MDVP:RAP"] = create_number_input("MDVP:RAP", "RAP", 0.0, 1.0)
+            numeric_inputs["MDVP:PPQ"] = create_number_input("MDVP:PPQ", "PPQ", 0.0, 1.0)
+            numeric_inputs["DDP"] = create_number_input("DDP", "DDP", 0.0, 1.0)
+            numeric_inputs["MDVP:Shimmer"] = create_number_input("MDVP:Shimmer", "Shimmer", 0.0, 1.0)
+            numeric_inputs["MDVP:Shimmer(dB)"] = create_number_input("MDVP:Shimmer(dB)", "Shimmer(dB)", 0.0, 5.0)
+            numeric_inputs["APQ3"] = create_number_input("APQ3", "APQ3", 0.0, 1.0)
 
         with col2:
-            st.markdown("**Jitter Measurements**")
-            numeric_inputs["MDVP:Jitter(%)"] = st.number_input("Jitter(%)", 0.0, 1.0)
-            numeric_inputs["MDVP:Jitter(Abs)"] = st.number_input("Jitter(Abs)", 0.0, 1.0)
-            numeric_inputs["MDVP:RAP"] = st.number_input("RAP", 0.0, 1.0)
-            numeric_inputs["MDVP:PPQ"] = st.number_input("PPQ", 0.0, 1.0)
-            numeric_inputs["DDP"] = st.number_input("DDP", 0.0, 1.0)
-
-        with col3:
-            st.markdown("**Shimmer Measurements**")
-            numeric_inputs["MDVP:Shimmer"] = st.number_input("Shimmer", 0.0, 1.0)
-            numeric_inputs["MDVP:Shimmer(dB)"] = st.number_input("Shimmer(dB)", 0.0, 5.0)
-            numeric_inputs["APQ3"] = st.number_input("APQ3", 0.0, 1.0)
-            numeric_inputs["APQ5"] = st.number_input("APQ5", 0.0, 1.0)
-            numeric_inputs["APQ"] = st.number_input("APQ", 0.0, 1.0)
-            numeric_inputs["DDA"] = st.number_input("DDA", 0.0, 1.0)
-
-        col4, col5 = st.columns(2)
-        with col4:
-            st.markdown("**Other Measurements**")
-            numeric_inputs["NHR"] = st.number_input("NHR", 0.0, 1.0)
-            numeric_inputs["HNR"] = st.number_input("HNR", 0.0, 50.0)
-            numeric_inputs["RPDE"] = st.number_input("RPDE", 0.0, 2.0)
-
-        with col5:
-            st.markdown("**Nonlinear Measures**")
-            numeric_inputs["DFA"] = st.number_input("DFA", 0.0, 2.0)
-            numeric_inputs["Spread1"] = st.number_input("Spread1", -10.0, 10.0)
-            numeric_inputs["Spread2"] = st.number_input("Spread2", -10.0, 10.0)
-            numeric_inputs["D2"] = st.number_input("D2", 0.0, 5.0)
-            numeric_inputs["PPE"] = st.number_input("PPE", 0.0, 2.0)
+            numeric_inputs["APQ5"] = create_number_input("APQ5", "APQ5", 0.0, 1.0)
+            numeric_inputs["APQ"] = create_number_input("APQ", "APQ", 0.0, 1.0)
+            numeric_inputs["DDA"] = create_number_input("DDA", "DDA", 0.0, 1.0)
+            numeric_inputs["NHR"] = create_number_input("NHR", "NHR", 0.0, 1.0)
+            numeric_inputs["HNR"] = create_number_input("HNR", "HNR", 0.0, 50.0)
+            numeric_inputs["RPDE"] = create_number_input("RPDE", "RPDE", 0.0, 2.0)
+            numeric_inputs["DFA"] = create_number_input("DFA", "DFA", 0.0, 2.0)
+            numeric_inputs["Spread1"] = create_number_input("Spread1", "Spread1", -10.0, 10.0)
+            numeric_inputs["Spread2"] = create_number_input("Spread2", "Spread2", -10.0, 10.0)
+            numeric_inputs["D2"] = create_number_input("D2", "D2", 0.0, 5.0)
+            numeric_inputs["PPE"] = create_number_input("PPE", "PPE", 0.0, 2.0)
 
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -833,6 +856,7 @@ if disease_predicted:
                 time.sleep(1.5)
             cols     = MODEL_FEATURES[disease_predicted]
             input_df = pd.DataFrame([[numeric_inputs[c] for c in cols]], columns=cols)
+
             prediction = model.predict(input_df)
             prediction_proba = model.predict_proba(input_df)[0]
 
