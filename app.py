@@ -782,10 +782,19 @@ if disease_predicted:
     with col2:
         predict_button = st.button("🔮 Predict Disease", use_container_width=True)
 
-    if predict_button:
-        if all(value != 0 and value != "" for value in numeric_inputs.values() if isinstance(value, (int, float))):
+   if predict_button:
+        missing = get_missing(numeric_inputs)
+        if missing:
+            st.session_state["flagged_fields"] = set(missing)
+            show_missing_banner(missing)
+            st.rerun()
+        else:
+            st.session_state["flagged_fields"] = set()
             with st.spinner("🔄 Analyzing your data..."):
-                time.sleep(1.5)  # Simulate processing time
+                time.sleep(1.5)
+
+            cols     = MODEL_FEATURES[disease_predicted]
+            input_df = pd.DataFrame([[numeric_inputs[c] for c in cols]], columns=cols)
 
             input_df = pd.DataFrame([numeric_inputs])[MODEL_FEATURES[disease_predicted]]
             prediction = model.predict(input_df)
