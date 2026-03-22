@@ -436,6 +436,60 @@ MODEL_FEATURES = {
         "NHR", "HNR", "RPDE", "DFA", "Spread1", "Spread2", "D2", "PPE"
     ]
 }
+
+ZERO_OK = {
+    "Pregnancies", "SkinThickness", "Insulin", "oldpeak", "ca",
+    "MDVP:Jitter(%)", "MDVP:Jitter(Abs)", "MDVP:RAP", "MDVP:PPQ", "DDP",
+    "MDVP:Shimmer", "MDVP:Shimmer(dB)", "APQ3", "APQ5", "APQ", "DDA",
+    "NHR", "Spread1", "Spread2",
+}
+
+FIELD_LABELS = {
+    "Glucose": "Glucose Level (mg/dL)",
+    "BloodPressure": "Blood Pressure (mm Hg)",
+    "BMI": "BMI",
+    "DiabetesPedigreeFunction": "Diabetes Pedigree Function",
+    "Age": "Age (years)", "age": "Age (years)",
+    "trestbps": "Resting Blood Pressure",
+    "chol": "Cholesterol Level",
+    "thalach": "Max Heart Rate Achieved",
+    "Total_Bilirubin": "Total Bilirubin",
+    "Direct_Bilirubin": "Direct Bilirubin",
+    "Alkaline_Phosphate": "Alkaline Phosphatase",
+    "SGPT": "SGPT / ALT", "SGOT": "SGOT / AST",
+    "Total_Protiens": "Total Protein",
+    "Albumin": "Albumin", "A/G_Ratio": "Albumin / Globulin Ratio",
+    "MDVP:Fo(Hz)": "MDVP: Fo (Hz)",
+    "MDVP:Fhi(Hz)": "MDVP: Fhi (Hz)",
+    "MDVP:Flo(Hz)": "MDVP: Flo (Hz)",
+    "HNR": "HNR", "RPDE": "RPDE", "DFA": "DFA", "D2": "D2", "PPE": "PPE",
+}
+
+def get_missing(inputs):
+    return [k for k, v in inputs.items()
+            if isinstance(v, (int, float)) and v == 0 and k not in ZERO_OK]
+
+def show_field_error(key):
+    label = FIELD_LABELS.get(key, key)
+    st.markdown(
+        f'<span style="color:#e53935; font-size:0.78rem; font-weight:600; display:block; margin-top:-0.3rem; margin-bottom:0.4rem;">⚠ Please enter a value for <b>{label}</b></span>',
+        unsafe_allow_html=True
+    )
+
+def show_missing_banner(missing_keys):
+    pills = "".join(
+        f'<span style="background:#ffebee; border:1px solid #ef9a9a; color:#c62828; padding:0.22rem 0.8rem; border-radius:50px; font-size:0.76rem; font-weight:600; margin:2px;">'
+        f'📌 {FIELD_LABELS.get(k, k)}</span>'
+        for k in missing_keys
+    )
+    n = len(missing_keys)
+    st.markdown(f"""
+    <div style="background:#fff5f5; border:1.5px solid #e53935; border-left:5px solid #c62828; border-radius:12px; padding:1rem 1.4rem; margin:1rem 0;">
+        <h4 style="color:#c62828; margin:0 0 0.4rem;">🚨 {n} field{'s' if n>1 else ''} {'are' if n>1 else 'is'} missing</h4>
+        <p style="color:#b71c1c; font-size:0.82rem; margin-bottom:0.6rem;">Please fill in all highlighted fields before predicting:</p>
+        <div style="display:flex; flex-wrap:wrap; gap:0.4rem;">{pills}</div>
+    </div>
+    """, unsafe_allow_html=True)
 # Disease recommendations with more detailed advice
 recommendations = {
     "Diabetes": {
