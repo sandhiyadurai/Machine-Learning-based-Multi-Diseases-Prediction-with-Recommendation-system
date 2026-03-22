@@ -414,7 +414,28 @@ diabetes_model = load_model("model/diabetes_model.pkl")
 heart_model = load_model("model/heart_disease_model.pkl")
 liver_model = load_model("model/liver_disease_model.pkl")
 parkinsons_model = load_model("model/parkinsons_model.pkl")
-
+# model features
+MODEL_FEATURES = {
+    "Diabetes": [
+        "Pregnancies", "Glucose", "BloodPressure", "SkinThickness",
+        "Insulin", "BMI", "DiabetesPedigreeFunction", "Age"
+    ],
+    "Heart Disease": [
+        "age", "sex", "cp", "trestbps", "chol", "fbs",
+        "restecg", "thalach", "exang", "oldpeak", "slope", "ca", "thal"
+    ],
+    "Liver Disease": [
+        "Age", "Gender", "Total_Bilirubin", "Direct_Bilirubin",
+        "Alkaline_Phosphate", "SGPT", "SGOT", "Total_Protiens",
+        "Albumin", "A/G_Ratio"
+    ],
+    "Parkinson's Disease": [
+        "MDVP:Fo(Hz)", "MDVP:Fhi(Hz)", "MDVP:Flo(Hz)",
+        "MDVP:Jitter(%)", "MDVP:Jitter(Abs)", "MDVP:RAP", "MDVP:PPQ", "DDP",
+        "MDVP:Shimmer", "MDVP:Shimmer(dB)", "APQ3", "APQ5", "APQ", "DDA",
+        "NHR", "HNR", "RPDE", "DFA", "Spread1", "Spread2", "D2", "PPE"
+    ]
+}
 # Disease recommendations with more detailed advice
 recommendations = {
     "Diabetes": {
