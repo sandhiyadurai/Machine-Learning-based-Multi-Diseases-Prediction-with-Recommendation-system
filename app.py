@@ -421,8 +421,9 @@ MODEL_FEATURES = {
         "Insulin", "BMI", "DiabetesPedigreeFunction", "Age"
     ],
     "Heart Disease": [
-        "age", "sex", "cp", "trestbps", "chol", "fbs",
-        "restecg", "thalach", "exang", "oldpeak", "slope", "ca", "thal"
+        "Age", "Sex", "Chest pain type", "BP", "Cholesterol", "FBS over 120",
+        "EKG results", "Max HR", "Exercise angina", "ST depression",
+        "Slope of ST", "Number of vessels fluro", "Thallium"
     ],
     "Liver Disease": [
         "Age", "Gender", "Total_Bilirubin", "Direct_Bilirubin",
@@ -717,51 +718,35 @@ if disease_predicted:
 
         col1, col2 = st.columns(2)
         with col1:
-            numeric_inputs["age"] = st.number_input("Age (years)", 1, 120)
-            numeric_inputs["sex"] = st.selectbox("Sex", ["Male", "Female"], help="Biological sex")
-            numeric_inputs["cp"] = st.selectbox("Chest Pain Type", [
-                "Typical Angina", "Atypical Angina", "Non-anginal Pain", "Asymptomatic"
-            ], help="Type of chest pain experienced")
-            numeric_inputs["trestbps"] = st.number_input("Resting Blood Pressure (mm Hg)", 0, 200, help="Resting blood pressure")
-            numeric_inputs["chol"] = st.number_input("Cholesterol Level (mg/dL)", 0, 600, help="Serum cholesterol")
+            numeric_inputs["Age"] = st.number_input("Age (years)", 1, 120)
+            numeric_inputs["Sex"] = st.selectbox("Sex", ["Male", "Female"])
+            numeric_inputs["Chest pain type"] = st.selectbox("Chest Pain Type", ["Typical Angina", "Atypical Angina", "Non-anginal Pain", "Asymptomatic"])
+            numeric_inputs["BP"] = st.number_input("Resting Blood Pressure (mm Hg)", 0, 200)
+            numeric_inputs["Cholesterol"] = st.number_input("Cholesterol Level (mg/dL)", 0, 600)
 
         with col2:
-            numeric_inputs["fbs"] = st.selectbox("Fasting Blood Sugar > 120 mg/dl", ["No", "Yes"], help="Fasting blood sugar > 120 mg/dl")
-            numeric_inputs["restecg"] = st.selectbox("Resting ECG Results", [
-                "Normal", "ST-T wave abnormality", "Left ventricular hypertrophy"
-            ], help="Resting electrocardiographic results")
-            numeric_inputs["thalach"] = st.number_input("Max Heart Rate Achieved", 0, 250, help="Maximum heart rate achieved")
-            numeric_inputs["exang"] = st.selectbox("Exercise Induced Angina", ["No", "Yes"], help="Exercise induced angina")
-            numeric_inputs["oldpeak"] = st.number_input("ST Depression", 0.0, 10.0, help="ST depression induced by exercise")
+            numeric_inputs["FBS over 120"] = st.selectbox("Fasting Blood Sugar > 120 mg/dl", ["No", "Yes"])
+            numeric_inputs["EKG results"] = st.selectbox("Resting ECG Results", ["Normal", "ST-T wave abnormality", "Left ventricular hypertrophy"])
+            numeric_inputs["Max HR"] = st.number_input("Max Heart Rate Achieved", 0, 250)
+            numeric_inputs["Exercise angina"] = st.selectbox("Exercise Induced Angina", ["No", "Yes"])
+            numeric_inputs["ST depression"] = st.number_input("ST Depression", 0.0, 10.0)
 
         col3, col4 = st.columns(2)
         with col3:
-            numeric_inputs["slope"] = st.selectbox("Slope of Peak Exercise ST Segment", [
-                "Upsloping", "Flat", "Downsloping"
-            ], help="Slope of the peak exercise ST segment")
-            numeric_inputs["ca"] = st.number_input("Number of Major Vessels", 0, 3, help="Number of major vessels colored by fluoroscopy")
+            numeric_inputs["Slope of ST"] = st.selectbox("Slope of Peak Exercise ST Segment", ["Upsloping", "Flat", "Downsloping"])
+            numeric_inputs["Number of vessels fluro"] = st.number_input("Number of Major Vessels", 0, 3)
 
         with col4:
-            numeric_inputs["thal"] = st.selectbox("Thalassemia", [
-                "Normal", "Fixed defect", "Reversible defect"
-            ], help="Thalassemia status")
+            numeric_inputs["Thallium"] = st.selectbox("Thalassemia", ["Normal", "Fixed defect", "Reversible defect"])
 
         # Convert categorical inputs to numeric
-        sex_map = {"Male": 1, "Female": 0}
-        fbs_map = {"No": 0, "Yes": 1}
-        exang_map = {"No": 0, "Yes": 1}
-        cp_map = {"Typical Angina": 0, "Atypical Angina": 1, "Non-anginal Pain": 2, "Asymptomatic": 3}
-        restecg_map = {"Normal": 0, "ST-T wave abnormality": 1, "Left ventricular hypertrophy": 2}
-        slope_map = {"Upsloping": 0, "Flat": 1, "Downsloping": 2}
-        thal_map = {"Normal": 1, "Fixed defect": 2, "Reversible defect": 3}
-
-        numeric_inputs["sex"] = sex_map[numeric_inputs["sex"]]
-        numeric_inputs["fbs"] = fbs_map[numeric_inputs["fbs"]]
-        numeric_inputs["exang"] = exang_map[numeric_inputs["exang"]]
-        numeric_inputs["cp"] = cp_map[numeric_inputs["cp"]]
-        numeric_inputs["restecg"] = restecg_map[numeric_inputs["restecg"]]
-        numeric_inputs["slope"] = slope_map[numeric_inputs["slope"]]
-        numeric_inputs["thal"] = thal_map[numeric_inputs["thal"]]
+        numeric_inputs["Sex"]              = {"Male": 1, "Female": 0}[numeric_inputs["Sex"]]
+        numeric_inputs["Chest pain type"]  = {"Typical Angina": 1, "Atypical Angina": 2, "Non-anginal Pain": 3, "Asymptomatic": 4}[numeric_inputs["Chest pain type"]]
+        numeric_inputs["FBS over 120"]     = {"No": 0, "Yes": 1}[numeric_inputs["FBS over 120"]]
+        numeric_inputs["EKG results"]      = {"Normal": 0, "ST-T wave abnormality": 1, "Left ventricular hypertrophy": 2}[numeric_inputs["EKG results"]]
+        numeric_inputs["Exercise angina"]  = {"No": 0, "Yes": 1}[numeric_inputs["Exercise angina"]]
+        numeric_inputs["Slope of ST"]      = {"Upsloping": 1, "Flat": 2, "Downsloping": 3}[numeric_inputs["Slope of ST"]]
+        numeric_inputs["Thallium"]         = {"Normal": 3, "Fixed defect": 6, "Reversible defect": 7}[numeric_inputs["Thallium"]]
 
     elif disease_predicted == "Liver Disease":
         st.markdown("**Please provide the following liver function test results:**")
