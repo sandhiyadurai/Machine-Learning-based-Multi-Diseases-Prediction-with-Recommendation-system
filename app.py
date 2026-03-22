@@ -781,8 +781,8 @@ if disease_predicted:
     col1, col2, col3 = st.columns([1,2,1])
     with col2:
         predict_button = st.button("🔮 Predict Disease", use_container_width=True)
-
-   if predict_button:
+    
+    if predict_button:
         missing = get_missing(numeric_inputs)
         if missing:
             st.session_state["flagged_fields"] = set(missing)
