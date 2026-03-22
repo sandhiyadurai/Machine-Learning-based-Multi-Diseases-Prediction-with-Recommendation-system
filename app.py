@@ -766,7 +766,7 @@ if disease_predicted:
             with st.spinner("🔄 Analyzing your data..."):
                 time.sleep(1.5)  # Simulate processing time
 
-            input_df = pd.DataFrame([numeric_inputs])
+            input_df = pd.DataFrame([numeric_inputs])[MODEL_FEATURES[disease_predicted]]
             prediction = model.predict(input_df)
             prediction_proba = model.predict_proba(input_df)[0]
 
