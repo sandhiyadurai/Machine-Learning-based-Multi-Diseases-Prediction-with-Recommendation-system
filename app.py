@@ -931,6 +931,6 @@ st.markdown("---")
 st.markdown("""
 <div style="text-align:center; padding:1.5rem 0; color:#556677;">
     <p style="font-size:1rem; font-weight:700; color:#7b61ff;">🏥 MediPredict </p>
-    <p style="font-size:0.8rem;">Powered by Machine Learning &nbsp;|&nbsp; Built with ❤️ &nbsp;|&nbsp; Not a substitute for professional medical advice</p>
+    <p style="font-size:0.8rem;">Powered by Sandhiya -Rakshantha-Kaviya &nbsp;|&nbsp; Not a substitute for professional medical advice</p>
 </div>
 """, unsafe_allow_html=True)
