@@ -619,7 +619,7 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown("### 🏥 Supported Diseases")
-    diseases = ["Diabetes", "Heart Disease", "Liver Disease", "Parkinson's Disease"]
+    diseases = ["Diabetes", "Heart Disease", "Liver Disease", ]
     for disease in diseases:
         st.markdown(f"• {disease}")
 
@@ -634,25 +634,25 @@ st.markdown("Choose all symptoms you're experiencing:")
 col1, col2, col3, col4 = st.columns(4)
 
 symptoms_data = {
-    "Diabetes": [
+    "SET 01": [
         "Fatigue", "Frequent urination", "High glucose", "Excessive thirst",
         "Blurred vision", "Slow-healing wounds", "Unexplained weight loss",
         "Tingling in hands/feet", "Frequent infections", "Dry skin",
         "Increased hunger", "Darkened skin patches", "Fruity breath odor"
     ],
-    "Heart Disease": [
+    "SET 02": [
         "Chest pain", "Shortness of breath", "High cholesterol", "Palpitations",
         "Swollen ankles/feet", "Dizziness or lightheadedness", "Persistent cough",
         "Fatigue during activity", "Irregular heartbeat", "Pain in arm/shoulder",
         "Cold sweats", "Nausea with chest discomfort", "Jaw or neck pain"
     ],
-    "Liver Disease": [
+    "SET 03": [
         "Jaundice", "Nausea", "Abdominal pain", "Dark urine",
         "Pale stool color", "Loss of appetite", "Easy bruising",
         "Spider-like blood vessels", "Itchy skin", "Leg swelling",
         "Confusion or forgetfulness", "Vomiting blood", "Abdominal swelling (ascites)"
     ],
-    "Parkinson's": [
+    "SET 04": [
         "Tremors", "Voice changes", "Stiffness", "Loss of balance",
         "Slow movement (bradykinesia)", "Mask-like facial expression",
         "Micrographia (small handwriting)", "Sleep disturbances",
@@ -699,16 +699,16 @@ model = None
 
 # Disease detection logic
 if selected_symptoms:
-    if any(symptom in selected_symptoms for symptom in symptoms_data["Diabetes"]):
+    if any(symptom in selected_symptoms for symptom in symptoms_data["SET 01"]):
         disease_predicted = "Diabetes"
         model = diabetes_model
-    elif any(symptom in selected_symptoms for symptom in symptoms_data["Heart Disease"]):
+    elif any(symptom in selected_symptoms for symptom in symptoms_data["SET 02"]):
         disease_predicted = "Heart Disease"
         model = heart_model
-    elif any(symptom in selected_symptoms for symptom in symptoms_data["Liver Disease"]):
+    elif any(symptom in selected_symptoms for symptom in symptoms_data["SET 03"]):
         disease_predicted = "Liver Disease"
         model = liver_model
-    elif any(symptom in selected_symptoms for symptom in symptoms_data["Parkinson's"]):
+    elif any(symptom in selected_symptoms for symptom in symptoms_data["SET 04"]):
         disease_predicted = "Parkinson's Disease"
         model = parkinsons_model
 
@@ -725,7 +725,7 @@ if disease_predicted:
 
         col1, col2 = st.columns(2)
         with col1:
-            numeric_inputs["Pregnancies"] = create_number_input("Pregnancies", "Number of Pregnancies", 0, 20, help="Number of times pregnant")
+            numeric_inputs["Pregnancies"] = create_number_input("Pregnancies", "Number of Pregnancies", -1, 20, help="Number of times pregnant")
             numeric_inputs["Glucose"] = create_number_input("Glucose", "Glucose Level (mg/dL)", 0, 200, help="Plasma glucose concentration")
             numeric_inputs["BloodPressure"] = create_number_input("BloodPressure", "Blood Pressure (mm Hg)", 0, 140, help="Diastolic blood pressure")
             numeric_inputs["SkinThickness"] = create_number_input("SkinThickness", "Skin Thickness (mm)", 0, 100, help="Triceps skin fold thickness")
