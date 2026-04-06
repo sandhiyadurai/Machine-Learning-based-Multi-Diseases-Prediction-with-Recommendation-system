@@ -664,25 +664,25 @@ selected_symptoms = []
 
 with col1:
     st.markdown("**🍬 Diabetes Symptoms**")
-    for symptom in symptoms_data["Diabetes"]:
+    for symptom in symptoms_data["SET 01"]:
         if st.checkbox(symptom, key=f"diabetes_{symptom}"):
             selected_symptoms.append(symptom)
 
 with col2:
     st.markdown("**❤️ Heart Disease Symptoms**")
-    for symptom in symptoms_data["Heart Disease"]:
+    for symptom in symptoms_data["SET 02"]:
         if st.checkbox(symptom, key=f"heart_{symptom}"):
             selected_symptoms.append(symptom)
 
 with col3:
     st.markdown("**🫀 Liver Disease Symptoms**")
-    for symptom in symptoms_data["Liver Disease"]:
+    for symptom in symptoms_data["SET 03"]:
         if st.checkbox(symptom, key=f"liver_{symptom}"):
             selected_symptoms.append(symptom)
 
 with col4:
     st.markdown("**🧠 Parkinson's Symptoms**")
-    for symptom in symptoms_data["Parkinson's"]:
+    for symptom in symptoms_data["SET 04"]:
         if st.checkbox(symptom, key=f"parkinsons_{symptom}"):
             selected_symptoms.append(symptom)
 
