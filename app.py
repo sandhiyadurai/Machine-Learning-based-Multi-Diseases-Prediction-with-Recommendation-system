@@ -1,400 +1,165 @@
-# symptom_based_multi_disease_app.py
+import os
+import json
+import csv
+import hashlib
+import pickle
+from datetime import datetime
+
 import streamlit as st
-import time
+import pandas as pd
+import numpy as np
 
-# Set page configuration
-st.set_page_config(
-    page_title="Multi-Disease Prediction System",
-    page_icon="🏥",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# Paths for storage and models
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+USER_FILE = os.path.join(BASE_DIR, "users.json")
+FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.csv")
+MODEL_DIR = os.path.join(BASE_DIR, "model")
+DIABETES_MODEL_PATH = os.path.join(MODEL_DIR, "diabetes_model.pkl")
+HEART_MODEL_PATH = os.path.join(MODEL_DIR, "heart_disease_model.pkl")
+HEART_ENCODER_PATH = os.path.join(MODEL_DIR, "heart_disease_encoder.pkl")
+LIVER_MODEL_PATH = os.path.join(MODEL_DIR, "liver_disease_model.pkl")
+LIVER_GENDER_ENCODER_PATH = os.path.join(MODEL_DIR, "liver_gender_encoder.pkl")
+PARKINSONS_MODEL_PATH = os.path.join(MODEL_DIR, "parkinsons_model.pkl")
 
-# Custom CSS for better styling
-st.markdown("""
-<style>
-    /* Clean white background with blue mixture */
-    .stApp {
-        background:
-            radial-gradient(circle at 30% 20%, rgba(135, 206, 235, 0.15) 0%, transparent 50%),
-            radial-gradient(circle at 70% 80%, rgba(70, 130, 180, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 50% 50%, rgba(176, 196, 222, 0.08) 0%, transparent 50%),
-            linear-gradient(135deg,
-                #ffffff 0%,
-                #f8f9fa 25%,
-                #e3f2fd 50%,
-                #f8f9fa 75%,
-                #ffffff 100%
-            );
-        background-attachment: fixed;
-        min-height: 100vh;
-        position: relative;
-    }
+# utilities
 
-    /* Add subtle blue accent particles */
-    .stApp::before {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-image:
-            radial-gradient(circle at 20% 30%, rgba(100, 149, 237, 0.06) 1px, transparent 1px),
-            radial-gradient(circle at 80% 70%, rgba(70, 130, 180, 0.04) 0.8px, transparent 0.8px),
-            radial-gradient(circle at 60% 10%, rgba(135, 206, 235, 0.05) 1.2px, transparent 1.2px);
-        background-size: 120px 120px, 180px 180px, 90px 90px;
-        background-position: 0 0, 60px 40px, 30px 80px;
-        animation: blueFloat 25s ease-in-out infinite;
-        pointer-events: none;
-        z-index: -1;
-    }
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
-    @keyframes blueFloat {
-        0%, 100% { transform: translateY(0px) translateX(0px) rotate(0deg); }
-        33% { transform: translateY(-20px) translateX(15px) rotate(120deg); }
-        66% { transform: translateY(-10px) translateX(-10px) rotate(240deg); }
-    }
 
-    /* Main content background with enhanced glassmorphism for light blue theme */
-    .main .block-container {
-        background: rgba(255, 255, 255, 0.98);
-        backdrop-filter: blur(20px);
-        border-radius: 20px;
-        margin: 2rem;
-        padding: 2rem;
-        box-shadow:
-            0 8px 32px rgba(70, 130, 180, 0.15),
-            0 0 0 1px rgba(255, 255, 255, 0.2),
-            inset 0 1px 0 rgba(255, 255, 255, 0.3);
-        border: 1px solid rgba(135, 206, 235, 0.3);
-        color: #000000; /* Black text for main content */
-        position: relative;
-    }
+def init_storage_files():
+    if not os.path.exists(USER_FILE):
+        with open(USER_FILE, "w", encoding="utf-8") as f:
+            json.dump({"users": []}, f, indent=2)
 
-    /* Add subtle blue inner glow effect */
-    .main .block-container::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        border-radius: 20px;
-        background: linear-gradient(135deg,
-            rgba(135, 206, 235, 0.05) 0%,
-            rgba(176, 196, 222, 0.03) 50%,
-            rgba(135, 206, 235, 0.05) 100%
-        );
-        pointer-events: none;
-        z-index: -1;
-    }
+    if not os.path.exists(FEEDBACK_FILE):
+        with open(FEEDBACK_FILE, "w", encoding="utf-8", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=["username", "name", "feedback", "timestamp"])
+            writer.writeheader()
 
-    /* Specific element color adaptations */
-    .main-header {
-        color: #000000; /* Dark text on light main container */
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-    }
-    .main-header {
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: #000000; /* Black header for maximum contrast */
-        text-align: center;
-        margin-bottom: 2rem;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-    }
-    .main-header:hover {
-        transform: scale(1.05);
-        text-shadow: 3px 3px 6px rgba(0,0,0,0.2);
-    }
 
-    .disease-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white; /* Light text on colored background */
-        padding: 1.5rem;
-        border-radius: 15px;
-        margin: 1rem 0;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-        border: 2px solid transparent;
-    }
-    .disease-card:hover {
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: 0 12px 25px rgba(0,0,0,0.2);
-        border-color: rgba(255,255,255,0.3);
-    }
-    /* Doctor referral section */
-    .doctor-section {
-        background: linear-gradient(135deg, rgba(0,212,255,0.08), rgba(123,97,255,0.08));
-        border: 1px solid rgba(0,212,255,0.2);
-        border-radius: 20px;
-        padding: 2rem;
-        margin: 2rem 0;
-    }
-    .doctor-section h3 {
-        color: black;
-        font-size: 1.3rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-    }
-    .doctor-section p { color: #8899aa; font-size: 0.9rem; margin-bottom: 1.5rem; }
+def load_users():
+    init_storage_files()
+    with open(USER_FILE, "r", encoding="utf-8") as f:
+        return json.load(f).get("users", [])
 
-    .doctor-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1rem;
+
+def save_users(users):
+    with open(USER_FILE, "w", encoding="utf-8") as f:
+        json.dump({"users": users}, f, indent=2)
+
+
+def authenticate(username: str, password: str) -> bool:
+    users = load_users()
+    hashed = hash_password(password)
+    return any(u["username"] == username and u["password"] == hashed for u in users)
+
+
+def register_user(username: str, password: str) -> tuple[bool, str]:
+    if not username or not password:
+        return False, "Username and password cannot be empty."
+    users = load_users()
+    if any(u["username"] == username for u in users):
+        return False, "Username already exists. Please choose a different one."
+    users.append({"username": username, "password": hash_password(password)})
+    save_users(users)
+    return True, "Signup successful! You can now login."
+
+
+def save_feedback(username: str, name: str, feedback: str):
+    init_storage_files()
+    with open(FEEDBACK_FILE, "a", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["username", "name", "feedback", "timestamp"])
+        writer.writerow({
+            "username": username,
+            "name": name,
+            "feedback": feedback,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        })
+
+
+@st.cache_resource
+def load_models():
+    models = {}
+    try:
+        with open(DIABETES_MODEL_PATH, "rb") as f:
+            models["diabetes"] = pickle.load(f)
+    except FileNotFoundError:
+        models["diabetes"] = None
+
+    try:
+        with open(HEART_MODEL_PATH, "rb") as f:
+            models["heart"] = pickle.load(f)
+    except FileNotFoundError:
+        models["heart"] = None
+
+    try:
+        with open(HEART_ENCODER_PATH, "rb") as f:
+            models["heart_encoder"] = pickle.load(f)
+    except FileNotFoundError:
+        models["heart_encoder"] = None
+
+    try:
+        with open(LIVER_MODEL_PATH, "rb") as f:
+            models["liver"] = pickle.load(f)
+    except FileNotFoundError:
+        models["liver"] = None
+
+    try:
+        with open(LIVER_GENDER_ENCODER_PATH, "rb") as f:
+            models["liver_gender_encoder"] = pickle.load(f)
+    except FileNotFoundError:
+        models["liver_gender_encoder"] = None
+
+    try:
+        with open(PARKINSONS_MODEL_PATH, "rb") as f:
+            models["parkinsons"] = pickle.load(f)
+    except FileNotFoundError:
+        models["parkinsons"] = None
+
+    return models
+
+
+def get_doctor_platforms():
+    return {
+        "Diabetes": [
+            {"name": "Practo", "url": "https://www.practo.com/consult/endocrinologist", "description": "Trusted endocrinologists for diabetes management."},
+            {"name": "Apollo 24/7", "url": "https://apollo247.com/specialties/endocrinology", "description": "24/7 diabetes care from top specialists."},
+            {"name": "mfine", "url": "https://www.mfine.co", "description": "Online endocrine consultations with certified doctors."},
+        ],
+        "Heart Disease": [
+            {"name": "Practo", "url": "https://www.practo.com/consult/cardiologist", "description": "Instant appointments with cardiologists."},
+            {"name": "Apollo 24/7", "url": "https://apollo247.com/specialties/cardiology", "description": "Trusted cardiac specialists available online."},
+            {"name": "Lybrate", "url": "https://www.lybrate.com/cardiology-specialist", "description": "Chat and video consults with heart experts."},
+        ],
+        "Liver Disease": [
+            {"name": "Practo", "url": "https://www.practo.com/consult/gastroenterologist", "description": "Hepatologists and gastroenterologists on demand."},
+            {"name": "Apollo 24/7", "url": "https://apollo247.com/specialties/gastroenterology", "description": "Online liver care from experienced specialists."},
+            {"name": "mfine", "url": "https://www.mfine.co", "description": "Teleconsultations for liver health."},
+        ],
+        "Parkinson's Disease": [
+            {"name": "Practo", "url": "https://www.practo.com/consult/neurologist", "description": "Neurologists experienced in movement disorders."},
+            {"name": "Apollo 24/7", "url": "https://apollo247.com/specialties/neurology", "description": "Online neurology consultations available 24/7."},
+            {"name": "Lybrate", "url": "https://www.lybrate.com/neurologist", "description": "Speak to Parkinson's specialists from home."},
+        ],
     }
 
-    .doctor-card {
-        background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 14px;
-        padding: 1.2rem;
-        text-align: center;
-        transition: all 0.3s ease;
-    }
-    .doctor-card:hover {
-        border-color: rgba(0,212,255,0.4);
-        background: rgba(0,212,255,0.06);
-        transform: translateY(-3px);
-    }
-    .doctor-card .platform-name {
-        font-weight: 700;
-        font-size: 1rem;
-        color: black;
-        margin-bottom: 0.3rem;
-    }
-    .doctor-card .platform-desc {
-        font-size: 0.78rem;
-        color: #8899aa;
-        margin-bottom: 0.8rem;
-        line-height: 1.4;
-    }
-    .doctor-card .visit-btn {
-        display: inline-block;
-        background: linear-gradient(135deg, #7b61ff, #00d4ff);
-        color: black !important;
-        padding: 0.4rem 1.2rem;
-        border-radius: 50px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        text-decoration: none;
-        letter-spacing: 0.03em;
-    }
-    .doctor-card .specialty-tag {
-        display: inline-block;
-        background: rgba(123,97,255,0.15);
-        color: black;
-        padding: 0.2rem 0.6rem;
-        border-radius: 50px;
-        font-size: 0.7rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
 
-    .symptom-tag {
-        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-        color: #1976d2;
-        padding: 0.5rem 1rem;
-        border-radius: 25px;
-        margin: 0.25rem;
-        display: inline-block;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        border: 1px solid rgba(25, 118, 210, 0.2);
-    }
-    .symptom-tag:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 12px rgba(25, 118, 210, 0.3);
-        background: linear-gradient(135deg, #2c3e50 0%, #1a237e 100%);
-    }
+def render_doctor_cards(platforms):
+    for platform in platforms:
+        st.markdown(
+            f"""
+            <div style='border:1px solid #d3d3d3; border-radius:12px; padding:16px; margin-bottom:12px; background:#f7f9ff;'>
+                <h4 style='margin-bottom:6px;'>{platform['name']}</h4>
+                <p style='margin:0 0 10px 0; color:#333;'>{platform['description']}</p>
+                <a href='{platform['url']}' target='_blank' style='color:#1f77b4; font-weight:600;'>Visit platform →</a>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-    .prediction-result {
-        background: linear-gradient(135deg, #4CAF50 0%, #45a049 50%, #66BB6A 100%);
-        color: white;
-        padding: 2rem;
-        border-radius: 20px;
-        text-align: center;
-        margin: 2rem 0;
-        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-        transition: all 0.3s ease;
-        border: 2px solid rgba(255,255,255,0.2);
-        animation: fadeIn 0.5s ease-in;
-    }
-    .prediction-result:hover {
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: 0 15px 30px rgba(76, 175, 80, 0.3);
-    }
 
-    .recommendation-box {
-        background: linear-gradient(135deg, rgba(255, 243, 205, 0.9) 0%, rgba(255, 241, 118, 0.9) 100%);
-        backdrop-filter: blur(5px);
-        border: 1px solid #ffeaa7;
-        color: #000000; /* Dark text on light yellow background */
-        padding: 1.5rem;
-        border-radius: 15px;
-        margin: 1rem 0;
-        transition: all 0.3s ease;
-    }
-
-    .recommendation-box p, .recommendation-box span, .recommendation-box div,
-    .recommendation-box h1, .recommendation-box h2, .recommendation-box h3, .recommendation-box h4 {
-        color: #000000 !important;
-    }
-    .recommendation-box:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 16px rgba(255, 193, 7, 0.2);
-        background: linear-gradient(135deg, rgba(255, 243, 205, 0.95) 0%, rgba(255, 241, 118, 0.95) 100%);
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .stButton>button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        padding: 0.75rem 2rem;
-        border-radius: 25px;
-        font-weight: bold;
-        font-size: 1.1rem;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        border: 2px solid rgba(255,255,255,0.2);
-    }
-    .stButton>button:hover {
-        transform: translateY(-3px) scale(1.05);
-        box-shadow: 0 8px 15px rgba(0,0,0,0.2);
-        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# Disease recommendations with more detailed advice
-recommendations = {
-    "Diabetes": {
-        "description": "Diabetes is a condition that affects how your body processes blood sugar.",
-        "specialist": "Endocrinologist",
-        "advice": [
-            "🏃‍♂️ Maintain a healthy diet with balanced carbohydrates",
-            "💪 Exercise regularly (at least 30 minutes daily)",
-            "📊 Monitor blood sugar levels regularly",
-            "⚖️ Maintain a healthy weight",
-            "👨‍⚕️ Consult with an endocrinologist",
-            "🩸 Get regular HbA1c tests"
-        ]
-    },
-    "Heart Disease": {
-        "description": "Heart disease refers to various conditions affecting the heart.",
-        "specialist": "Cardiologist",
-        "advice": [
-            "🥗 Avoid fatty and processed foods",
-            "🏃‍♀️ Exercise moderately and consistently",
-            "🏥 Have regular cardiovascular checkups",
-            "🩸 Monitor cholesterol and blood pressure",
-            "🚭 Quit smoking if applicable",
-            "⚖️ Maintain healthy BMI",
-            "👨‍⚕️ Consult a cardiologist"
-        ]
-    },
-    "Liver Disease": {
-        "description": "Liver disease includes conditions affecting liver function.",
-        "specialist": "Hepatologist",
-        "advice": [
-            "🚫 Avoid alcohol consumption",
-            "🥗 Eat a balanced, nutritious diet",
-            "💧 Stay well hydrated",
-            "🏥 Get regular liver function tests",
-            "💊 Avoid unnecessary medications",
-            "🩸 Monitor liver enzymes",
-            "👨‍⚕️ Consult a hepatologist"
-        ]
-    },
-    "Parkinson's Disease": {
-        "description": "Parkinson's is a neurodegenerative disorder affecting movement.",
-        "specialist": "Neurologist",
-        "advice": [
-            "🧠 Consult a neurologist immediately",
-            "🏃‍♂️ Do physiotherapy and occupational therapy",
-            "📝 Monitor symptoms progression",
-            "💊 Follow prescribed medication regimen",
-            "🧘‍♀️ Consider speech therapy if needed",
-            "👥 Join support groups",
-            "🏥 Regular follow-ups with specialists"
-        ]
-    }
-}
-
-# ─── Doctor referral platforms ───────────────────────────────────────────────
-doctor_platforms = {
-    "Diabetes": [
-        {"name": "Practo", "url": "https://www.practo.com/consult/endocrinologist", "desc": "Book certified endocrinologists in minutes. Video, audio, or chat consult.", "specialty": "Endocrinology"},
-        {"name": "Apollo 247", "url": "https://apollo247.com/specialties/endocrinology", "desc": "24/7 access to Apollo doctors. Trusted network across India.", "specialty": "Endocrinology"},
-        {"name": "1mg Health", "url": "https://www.1mg.com/consult", "desc": "Doctor consultations + medicine delivery. Convenient all-in-one.", "specialty": "General & Specialist"},
-        {"name": "DocOnline", "url": "https://doconline.com", "desc": "Instant doctor consultations online. Subscription-based plans available.", "specialty": "Endocrinology"},
-        {"name": "Healthplix", "url": "https://healthplix.com", "desc": "AI-assisted smart clinic platform connecting patients with specialists.", "specialty": "Specialist"},
-        {"name": "mfine", "url": "https://www.mfine.co", "desc": "Top hospital doctors online. Multispecialty consultations from home.", "specialty": "Multispecialty"},
-    ],
-    "Heart Disease": [
-        {"name": "Practo", "url": "https://www.practo.com/consult/cardiologist", "desc": "Top cardiologists available online instantly. Rated & reviewed.", "specialty": "Cardiology"},
-        {"name": "Apollo 247", "url": "https://apollo247.com/specialties/cardiology", "desc": "24/7 cardiac consultations from Apollo's expert cardiologists.", "specialty": "Cardiology"},
-        {"name": "Max Healthcare", "url": "https://www.maxhealthcare.in/speciality/cardiology", "desc": "World-class cardiac care. Tele-consult with senior cardiologists.", "specialty": "Cardiology"},
-        {"name": "mfine", "url": "https://www.mfine.co", "desc": "Hospital-grade cardiac specialists accessible from your home.", "specialty": "Cardiology"},
-        {"name": "Medibuddy", "url": "https://www.medibuddy.in", "desc": "Corporate health plans & instant specialist consults. Pan-India.", "specialty": "Multispecialty"},
-        {"name": "Lybrate", "url": "https://www.lybrate.com/cardiology-specialist", "desc": "Real-time Q&A and video consults with verified cardiologists.", "specialty": "Cardiology"},
-    ],
-    "Liver Disease": [
-        {"name": "Practo", "url": "https://www.practo.com/consult/gastroenterologist", "desc": "Verified gastroenterologists & hepatologists available now.", "specialty": "Hepatology"},
-        {"name": "Apollo 247", "url": "https://apollo247.com/specialties/gastroenterology", "desc": "Expert liver specialists from Apollo's network.", "specialty": "Gastroenterology"},
-        {"name": "Fortis Healthcare", "url": "https://www.fortishealthcare.com/speciality/hepatology", "desc": "Specialised hepatology tele-consult with senior consultants.", "specialty": "Hepatology"},
-        {"name": "1mg Health", "url": "https://www.1mg.com/consult", "desc": "Consult + liver function test packages. End-to-end liver care.", "specialty": "Hepatology"},
-        {"name": "Lybrate", "url": "https://www.lybrate.com/gastroenterologist", "desc": "Chat, call, or video with experienced gastroenterologists.", "specialty": "Gastroenterology"},
-        {"name": "mfine", "url": "https://www.mfine.co", "desc": "Hospital-affiliated liver specialists at your fingertips.", "specialty": "Multispecialty"},
-    ],
-    "Parkinson's Disease": [
-        {"name": "Practo", "url": "https://www.practo.com/consult/neurologist", "desc": "Top neurologists for Parkinson's consultations online.", "specialty": "Neurology"},
-        {"name": "Apollo 247", "url": "https://apollo247.com/specialties/neurology", "desc": "Apollo neurologists available 24/7 for tele-consultations.", "specialty": "Neurology"},
-        {"name": "NIMHANS Tele", "url": "https://nimhans.ac.in", "desc": "India's premier neuroscience institute with tele-neurology services.", "specialty": "Neurology"},
-        {"name": "Max Healthcare", "url": "https://www.maxhealthcare.in/speciality/neurology", "desc": "Senior Parkinson's specialists for video consultations.", "specialty": "Neurology"},
-        {"name": "mfine", "url": "https://www.mfine.co", "desc": "Certified neurologists from top hospitals. Easy scheduling.", "specialty": "Neurology"},
-        {"name": "Lybrate", "url": "https://www.lybrate.com/neurologist", "desc": "Expert neurologists for movement disorder consultations.", "specialty": "Neurology"},
-    ]
-}
-
-# Sidebar with information
-with st.sidebar:
-    st.title("ℹ️ About This System")
-    st.markdown("""
-    <div class="sidebar-info">
-    <h4>🔬 How It Works</h4>
-    <p>This AI-powered system uses symptom-based analysis to predict potential diseases and provide personalized health recommendations.</p>
-
-    <h4>⚠️ Important Disclaimer</h4>
-    <p><strong>This is not a substitute for professional medical advice.</strong> Always consult with qualified healthcare professionals for accurate diagnosis and treatment.</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown("---")
-    st.markdown("### 🏥 Supported Disease")
-    diseases = ["Diabetes", "Heart Disease", "Liver Disease", "Parkinson's Disease"]
-    for disease in diseases:
-        st.markdown(f"• {disease}")
-
-# Main content
-st.markdown('<h1 class="main-header">🏥 Multi-Disease Prediction & Recommendation System</h1>', unsafe_allow_html=True)
-st.markdown('<p style="text-align: center; font-size: 1.2rem; color: #666; margin-bottom: 2rem;">Select your symptoms and get AI-powered disease prediction with personalized recommendations</p>', unsafe_allow_html=True)
-
-# Symptom selection with better UI
-st.markdown("### 🎯 Select Your Symptoms")
-st.markdown("Choose all symptoms you're experiencing:")
-
-col1, col2, col3, col4 = st.columns(4)
-
-symptoms_data = {
+SYMPTOMS_DATA = {
     "Diabetes": [
         "Fatigue", "Frequent urination", "High glucose", "Excessive thirst",
         "Blurred vision", "Slow-healing wounds", "Unexplained weight loss",
@@ -413,7 +178,7 @@ symptoms_data = {
         "Spider-like blood vessels", "Itchy skin", "Leg swelling",
         "Confusion or forgetfulness", "Vomiting blood", "Abdominal swelling (ascites)"
     ],
-    "Parkinson's": [
+    "Parkinson's Disease": [
         "Tremors", "Voice changes", "Stiffness", "Loss of balance",
         "Slow movement (bradykinesia)", "Mask-like facial expression",
         "Micrographia (small handwriting)", "Sleep disturbances",
@@ -422,142 +187,341 @@ symptoms_data = {
     ]
 }
 
-selected_symptoms = []
 
-with col1:
-    st.markdown("**Symptoms**")
-    for symptom in symptoms_data["Diabetes"]:
-        if st.checkbox(symptom, key=f"diabetes_{symptom}"):
-            selected_symptoms.append(symptom)
-
-with col2:
-    st.markdown("**Symptoms**")
-    for symptom in symptoms_data["Heart Disease"]:
-        if st.checkbox(symptom, key=f"heart_{symptom}"):
-            selected_symptoms.append(symptom)
-
-with col3:
-    st.markdown("**Symptoms**")
-    for symptom in symptoms_data["Liver Disease"]:
-        if st.checkbox(symptom, key=f"liver_{symptom}"):
-            selected_symptoms.append(symptom)
-
-with col4:
-    st.markdown("**Symptoms**")
-    for symptom in symptoms_data["Parkinson's"]:
-        if st.checkbox(symptom, key=f"parkinsons_{symptom}"):
-            selected_symptoms.append(symptom)
-
-# Display selected symptoms
-if selected_symptoms:
-    st.markdown("### 📋 Your Selected Symptoms:")
-    symptom_tags = " ".join([f'<span class="symptom-tag">🔸 {symptom}</span>' for symptom in selected_symptoms])
-    st.markdown(f'<div style="margin: 1rem 0;">{symptom_tags}</div>', unsafe_allow_html=True)
-
-# Determine possible disease based on symptoms
-disease_predicted = None
-
-# Disease detection logic - simplified symptom-based prediction
-if selected_symptoms:
-    # Count symptoms per disease
-    diabetes_count = sum(1 for s in selected_symptoms if s in symptoms_data["Diabetes"])
-    heart_count = sum(1 for s in selected_symptoms if s in symptoms_data["Heart Disease"])
-    liver_count = sum(1 for s in selected_symptoms if s in symptoms_data["Liver Disease"])
-    parkinsons_count = sum(1 for s in selected_symptoms if s in symptoms_data["Parkinson's"])
-
-    # Find disease with most matching symptoms
+def predict_from_symptoms(selected_symptoms):
+    if not selected_symptoms:
+        return None, 0, 0, 0.0
     counts = {
-        "Diabetes": diabetes_count,
-        "Heart Disease": heart_count,
-        "Liver Disease": liver_count,
-        "Parkinson's Disease": parkinsons_count
+        disease: sum(1 for symptom in selected_symptoms if symptom in symptoms)
+        for disease, symptoms in SYMPTOMS_DATA.items()
+    }
+    predicted = max(counts, key=counts.get)
+    best_count = counts[predicted]
+    total = len(SYMPTOMS_DATA[predicted])
+    confidence = min(0.95, 0.2 + (best_count / total) * 0.75)
+    return predicted if best_count > 0 else None, best_count, total, confidence
+
+
+def show_recommendations(disease):
+    recommendations = {
+        "Diabetes": [
+            "Follow a balanced diet and monitor sugar intake.",
+            "Maintain a regular exercise routine.",
+            "Stay hydrated and track blood glucose regularly.",
+            "Consult an endocrinologist for medication review.",
+        ],
+        "Heart Disease": [
+            "Limit saturated fats and processed foods.",
+            "Take regular cardiovascular breaks and exercise.",
+            "Monitor blood pressure and cholesterol levels.",
+            "Visit a cardiologist for detailed evaluation.",
+        ],
+        "Liver Disease": [
+            "Avoid alcohol and reduce medication overuse.",
+            "Eat nutrient-rich foods and stay hydrated.",
+            "Monitor liver function tests regularly.",
+            "Consult a hepatologist for a care plan.",
+        ],
+        "Parkinson's Disease": [
+            "Schedule regular neurology consultations.",
+            "Maintain physical activity and balance exercises.",
+            "Track symptoms and medication timing carefully.",
+            "Consider physiotherapy and speech therapy support.",
+        ],
+    }
+    st.markdown("### Precautions & Next Steps")
+    for recommendation in recommendations.get(disease, []):
+        st.markdown(f"- {recommendation}")
+
+
+def predict_diabetes(model):
+    st.subheader("Diabetes Prediction")
+    col1, col2 = st.columns(2)
+    with col1:
+        pregnancies = st.number_input("Number of Pregnancies", min_value=0, max_value=20, value=0)
+        glucose = st.number_input("Glucose Level", min_value=0, max_value=300, value=110)
+        blood_pressure = st.number_input("Blood Pressure (mm Hg)", min_value=0, max_value=200, value=70)
+        skin_thickness = st.number_input("Skin Thickness (mm)", min_value=0, max_value=100, value=20)
+    with col2:
+        insulin = st.number_input("Insulin Level", min_value=0, max_value=900, value=80)
+        bmi = st.number_input("BMI", min_value=0.0, max_value=70.0, value=26.0)
+        dpf = st.number_input("Diabetes Pedigree Function", min_value=0.0, max_value=3.0, value=0.5)
+        age = st.number_input("Age", min_value=1, max_value=120, value=32)
+
+    if st.button("Predict Diabetes"):
+        sample = pd.DataFrame([
+            [pregnancies, glucose, blood_pressure, skin_thickness, insulin, bmi, dpf, age]
+        ], columns=["Pregnancies", "Glucose", "BloodPressure", "SkinThickness", "Insulin", "BMI", "DiabetesPedigreeFunction", "Age"])
+        prediction = model.predict(sample)[0]
+        probabilities = model.predict_proba(sample)[0]
+        score = float(probabilities[1] if prediction == 1 else probabilities[0])
+        label = "Positive for Diabetes" if prediction == 1 else "Negative for Diabetes"
+        st.success(label)
+        st.info(f"Confidence: {score:.1%}")
+        show_recommendations("Diabetes")
+
+
+def predict_heart(model, encoder):
+    st.subheader("Heart Disease Prediction")
+    col1, col2 = st.columns(2)
+    with col1:
+        age = st.number_input("Age", min_value=1, max_value=120, value=55)
+        sex = st.selectbox("Sex", ["Male", "Female"])
+        chest_pain = st.selectbox("Chest Pain Type", ["Typical Angina", "Atypical Angina", "Non-anginal Pain", "Asymptomatic"])
+        bp = st.number_input("Resting BP", min_value=0, max_value=250, value=120)
+        cholesterol = st.number_input("Cholesterol", min_value=0, max_value=600, value=200)
+        fbs = st.selectbox("Fasting Blood Sugar > 120 mg/dL", ["No", "Yes"])
+    with col2:
+        ekg = st.selectbox("Resting ECG Results", ["Normal", "ST-T wave abnormality", "Left ventricular hypertrophy"])
+        max_hr = st.number_input("Max Heart Rate Achieved", min_value=0, max_value=250, value=150)
+        exercise_angina = st.selectbox("Exercise Induced Angina", ["No", "Yes"])
+        st_depression = st.number_input("ST Depression", min_value=0.0, max_value=10.0, value=1.0)
+        slope = st.selectbox("Slope of ST Segment", ["Upsloping", "Flat", "Downsloping"])
+        vessels = st.selectbox("Number of Major Vessels", [0, 1, 2, 3])
+        thallium = st.selectbox("Thallium Stress Test", ["Normal", "Fixed defect", "Reversible defect"])
+
+    mapping = {
+        "Male": 1,
+        "Female": 0,
+        "Typical Angina": 4,
+        "Atypical Angina": 3,
+        "Non-anginal Pain": 2,
+        "Asymptomatic": 1,
+        "No": 0,
+        "Yes": 1,
+        "Normal": 0,
+        "ST-T wave abnormality": 1,
+        "Left ventricular hypertrophy": 2,
+        "Upsloping": 1,
+        "Flat": 2,
+        "Downsloping": 3,
+        "Fixed defect": 6,
+        "Reversible defect": 7,
     }
 
-    max_count = max(counts.values())
-    if max_count > 0:
-        # Get diseases with max count, prefer the first one if tie
-        candidates = [d for d, c in counts.items() if c == max_count]
-        disease_predicted = candidates[0]
+    if st.button("Predict Heart Disease"):
+        sample = pd.DataFrame([
+            [age, mapping[sex], mapping[chest_pain], bp, cholesterol, mapping[fbs], mapping[ekg], max_hr, mapping[exercise_angina], st_depression, mapping[slope], vessels, mapping[thallium]]
+        ], columns=["Age", "Sex", "Chest pain type", "BP", "Cholesterol", "FBS over 120", "EKG results", "Max HR", "Exercise angina", "ST depression", "Slope of ST", "Number of vessels fluro", "Thallium"])
+        prediction = model.predict(sample)[0]
+        label = encoder.inverse_transform([prediction])[0] if encoder is not None else ("Presence" if prediction == 1 else "Absence")
+        probabilities = model.predict_proba(sample)[0]
+        score = float(probabilities[1] if prediction == 1 else probabilities[0])
+        st.success(f"Prediction: {label}")
+        st.info(f"Confidence: {score:.1%}")
+        show_recommendations("Heart Disease")
 
-# Show disease prediction and recommendations
-if disease_predicted:
-    st.markdown("---")
-    st.markdown(f'<div class="disease-card"><h3>🎯 Detected Condition: {disease_predicted}</h3><p>{recommendations[disease_predicted]["description"]}</p></div>', unsafe_allow_html=True)
 
-    # Prediction section
-    st.markdown("### 🔍 Get Analysis & Recommendations")
-    col1, col2, col3 = st.columns([1,2,1])
+def predict_liver(model, gender_encoder):
+    st.subheader("Liver Disease Prediction")
+    col1, col2 = st.columns(2)
+    with col1:
+        age = st.number_input("Age", min_value=1, max_value=120, value=45)
+        gender = st.selectbox("Gender", ["Male", "Female"])
+        total_bilirubin = st.number_input("Total Bilirubin", min_value=0.0, max_value=50.0, value=1.0)
+        direct_bilirubin = st.number_input("Direct Bilirubin", min_value=0.0, max_value=20.0, value=0.2)
+        alkaline_phosphotase = st.number_input("Alkaline Phosphotase", min_value=0, max_value=800, value=120)
     with col2:
-        analyze_button = st.button("🔮 Analyze Symptoms", use_container_width=True)
+        alt = st.number_input("Alamine Aminotransferase (ALT)", min_value=0, max_value=500, value=25)
+        ast = st.number_input("Aspartate Aminotransferase (AST)", min_value=0, max_value=500, value=20)
+        total_protiens = st.number_input("Total Proteins", min_value=0.0, max_value=15.0, value=6.5)
+        albumin = st.number_input("Albumin", min_value=0.0, max_value=10.0, value=3.5)
+        ag_ratio = st.number_input("Albumin/Globulin Ratio", min_value=0.0, max_value=3.0, value=1.0)
 
-    if analyze_button:
-        with st.spinner("🔄 Analyzing your symptoms..."):
-            time.sleep(1.5)
+    if st.button("Predict Liver Disease"):
+        gender_value = gender_encoder.transform([gender])[0] if gender_encoder is not None else (1 if gender == "Male" else 0)
+        sample = pd.DataFrame([
+            [age, gender_value, total_bilirubin, direct_bilirubin, alkaline_phosphotase, alt, ast, total_protiens, albumin, ag_ratio]
+        ], columns=["Age", "Gender", "Total_Bilirubin", "Direct_Bilirubin", "Alkaline_Phosphotase", "Alamine_Aminotransferase", "Aspartate_Aminotransferase", "Total_Protiens", "Albumin", "Albumin_and_Globulin_Ratio"])
+        prediction = model.predict(sample)[0]
+        probabilities = model.predict_proba(sample)[0]
+        score = float(probabilities[1] if prediction == 1 else probabilities[0])
+        label = "Positive for Liver Disease" if prediction == 1 else "Negative for Liver Disease"
+        st.success(label)
+        st.info(f"Confidence: {score:.1%}")
+        show_recommendations("Liver Disease")
 
-        # Calculate confidence based on symptom count
-        symptom_count = sum(1 for s in selected_symptoms if s in symptoms_data[disease_predicted])
-        total_symptoms = len(symptoms_data[disease_predicted])
-        confidence = min(0.95, symptom_count / total_symptoms * 0.8 + 0.2)  # Cap at 95%, minimum 20%
 
-        result = f"Potential {disease_predicted} Detected"
-        risk_level = "High" if confidence > 0.7 else "Moderate" if confidence > 0.5 else "Low"
+def predict_parkinsons(model):
+    st.subheader("Parkinson's Disease Prediction")
+    cols = st.columns(2)
+    with cols[0]:
+        fo = st.number_input("MDVP:Fo(Hz)", min_value=0.0, max_value=500.0, value=120.0)
+        fhi = st.number_input("MDVP:Fhi(Hz)", min_value=0.0, max_value=500.0, value=150.0)
+        flo = st.number_input("MDVP:Flo(Hz)", min_value=0.0, max_value=500.0, value=100.0)
+        jitter_per = st.number_input("MDVP:Jitter(%)", min_value=0.0, max_value=1.0, value=0.005)
+        jitter_abs = st.number_input("MDVP:Jitter(Abs)", min_value=0.0, max_value=1.0, value=0.0001)
+        rap = st.number_input("MDVP:RAP", min_value=0.0, max_value=1.0, value=0.004)
+        ppq = st.number_input("MDVP:PPQ", min_value=0.0, max_value=1.0, value=0.005)
+        ddp = st.number_input("Jitter:DDP", min_value=0.0, max_value=1.0, value=0.012)
+        shimmer = st.number_input("MDVP:Shimmer", min_value=0.0, max_value=1.0, value=0.04)
+        shimmer_db = st.number_input("MDVP:Shimmer(dB)", min_value=0.0, max_value=5.0, value=0.4)
+    with cols[1]:
+        apq3 = st.number_input("Shimmer:APQ3", min_value=0.0, max_value=1.0, value=0.02)
+        apq5 = st.number_input("Shimmer:APQ5", min_value=0.0, max_value=1.0, value=0.03)
+        apq = st.number_input("MDVP:APQ", min_value=0.0, max_value=1.0, value=0.03)
+        dda = st.number_input("Shimmer:DDA", min_value=0.0, max_value=1.0, value=0.08)
+        nhr = st.number_input("NHR", min_value=0.0, max_value=1.0, value=0.02)
+        hnr = st.number_input("HNR", min_value=0.0, max_value=50.0, value=20.0)
+        rpde = st.number_input("RPDE", min_value=0.0, max_value=1.0, value=0.45)
+        dfa = st.number_input("DFA", min_value=0.0, max_value=2.0, value=0.82)
+        spread1 = st.number_input("spread1", min_value=-10.0, max_value=10.0, value=-4.0)
+        spread2 = st.number_input("spread2", min_value=-10.0, max_value=10.0, value=0.3)
+        d2 = st.number_input("D2", min_value=0.0, max_value=5.0, value=2.3)
+        ppe = st.number_input("PPE", min_value=0.0, max_value=2.0, value=0.3)
 
-        st.markdown(f'''
-        <div class="prediction-result">
-            <h2>🎯 Analysis Result</h2>
-            <h3>{result}</h3>
-            <p><strong>Risk Level: {risk_level}</strong></p>
-            <p>Confidence: {confidence:.1%}</p>
-            <p>Matching Symptoms: {symptom_count} out of {total_symptoms}</p>
-        </div>
-        ''', unsafe_allow_html=True)
+    if st.button("Predict Parkinson's Disease"):
+        sample = pd.DataFrame([
+            [fo, fhi, flo, jitter_per, jitter_abs, rap, ppq, ddp, shimmer, shimmer_db, apq3, apq5, apq, dda, nhr, hnr, rpde, dfa, spread1, spread2, d2, ppe]
+        ], columns=[
+            "MDVP:Fo(Hz)", "MDVP:Fhi(Hz)", "MDVP:Flo(Hz)", "MDVP:Jitter(%)", "MDVP:Jitter(Abs)", "MDVP:RAP", "MDVP:PPQ", "Jitter:DDP",
+            "MDVP:Shimmer", "MDVP:Shimmer(dB)", "Shimmer:APQ3", "Shimmer:APQ5", "MDVP:APQ", "Shimmer:DDA", "NHR", "HNR", "RPDE", "DFA", "spread1", "spread2", "D2", "PPE"
+        ])
+        prediction = model.predict(sample)[0]
+        probabilities = model.predict_proba(sample)[0]
+        score = float(probabilities[1] if prediction == 1 else probabilities[0])
+        label = "Positive for Parkinson's" if prediction == 1 else "Negative for Parkinson's"
+        st.success(label)
+        st.info(f"Confidence: {score:.1%}")
+        show_recommendations("Parkinson's Disease")
 
-        # Recommendations
-        st.markdown("### 💡 Personalized Health Recommendations")
-        st.markdown(f'<div class="recommendation-box"><h4>📋 Recommended Actions for {disease_predicted}:</h4></div>', unsafe_allow_html=True)
 
-        for advice in recommendations[disease_predicted]["advice"]:
-            st.markdown(f"• {advice}")
+def feedback_page(username):
+    st.header("Feedback")
+    st.write("Share your thoughts about the app and how we can improve it.")
 
-        st.markdown("---")
-        st.warning("⚠️ **Important:** This analysis is for informational purposes only. Please consult a healthcare professional for proper diagnosis and treatment.")
+    name = st.text_input("Your Name", value=username)
+    message = st.text_area("Feedback")
+    if st.button("Submit Feedback"):
+        if not name or not message:
+            st.error("Please provide both your name and feedback message.")
+        else:
+            save_feedback(username, name, message)
+            st.success("Thank you! Your feedback has been submitted.")
+            st.info("Feedback is stored securely for review.")
 
-        # ─── Doctor Referral Section ──────────────────────────────────────────
-        st.markdown("---")
-        specialist = recommendations[disease_predicted]["specialist"]
-        platforms = doctor_platforms.get(disease_predicted, [])
 
-        st.markdown(f"""
-        <div class="doctor-section">
-            <h3>👨‍⚕️ Consult a {specialist} Online</h3>
-            <p>Based on your symptoms, we recommend consulting a qualified {specialist}.
-            Below are trusted telemedicine platforms where you can book an online consultation from the comfort of your home.</p>
-            <div class="doctor-grid">
-        """, unsafe_allow_html=True)
+def main():
+    st.set_page_config(page_title="Multi-Disease Prediction App", page_icon="🏥", layout="wide")
+    st.markdown("# 🩺 Multi-Disease Prediction Web App")
+    st.markdown("Welcome to the healthcare dashboard. Signup or login to begin using disease prediction and consultation features.")
 
-        for p in platforms:
-            st.markdown(f"""
-                <div class="doctor-card">
-                    <div class="specialty-tag">{p['specialty']}</div>
-                    <div class="platform-name">{p['name']}</div>
-                    <div class="platform-desc">{p['desc']}</div>
-                    <a href="{p['url']}" target="_blank" class="visit-btn">Book Now →</a>
-                </div>
-            """, unsafe_allow_html=True)
+    if "logged_in" not in st.session_state:
+        st.session_state.logged_in = False
+        st.session_state.username = ""
 
-        st.markdown("</div></div>", unsafe_allow_html=True)
+    if st.session_state.logged_in:
+        sidebar_options = ["Dashboard", "Disease Prediction", "Doctor Consultation", "Feedback"]
+        selected_page = st.sidebar.selectbox("Menu", sidebar_options)
+        st.sidebar.markdown("---")
+        st.sidebar.write(f"**Logged in as:** {st.session_state.username}")
+        if st.sidebar.button("Logout"):
+            st.session_state.logged_in = False
+            st.session_state.username = ""
 
-else:
-    if selected_symptoms:
-        st.warning("🤔 The selected symptoms don't strongly match any disease in our database. Please try selecting different symptoms or consult a healthcare professional.")
+        models = load_models()
+
+        if selected_page == "Dashboard":
+            st.header("Dashboard")
+            st.markdown("Use the sidebar to go to different modules. Here you can access disease prediction, doctor platforms, and feedback.")
+            st.metric("Logged in user", st.session_state.username)
+            st.write("This project demonstrates a beginner-friendly medical prediction dashboard built with Streamlit.")
+
+        elif selected_page == "Disease Prediction":
+            st.header("Disease Prediction")
+            st.markdown("Select the symptoms you are experiencing and then click Analyze to get a likely condition.")
+
+            selected_symptoms = []
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown("**Symptoms Set 01**")
+                for symptom in SYMPTOMS_DATA["Diabetes"]:
+                    if st.checkbox(symptom, key=f"sym_diabetes_{symptom}"):
+                        selected_symptoms.append(symptom)
+
+            with col2:
+                st.markdown("**Symptoms Set 02**")
+                for symptom in SYMPTOMS_DATA["Heart Disease"]:
+                    if st.checkbox(symptom, key=f"sym_heart_{symptom}"):
+                        selected_symptoms.append(symptom)
+
+            col3, col4 = st.columns(2)
+            with col3:
+                st.markdown("**Symptoms Set 03**")
+                for symptom in SYMPTOMS_DATA["Liver Disease"]:
+                    if st.checkbox(symptom, key=f"sym_liver_{symptom}"):
+                        selected_symptoms.append(symptom)
+
+            with col4:
+                st.markdown("**Symptoms Set 04**")
+                for symptom in SYMPTOMS_DATA["Parkinson's Disease"]:
+                    if st.checkbox(symptom, key=f"sym_parkinsons_{symptom}"):
+                        selected_symptoms.append(symptom)
+
+            if selected_symptoms:
+                st.markdown("### Selected Symptoms")
+                st.write(", ".join(selected_symptoms))
+
+            if st.button("Analyze Symptoms"):
+                predicted, match_count, total_symptoms, confidence = predict_from_symptoms(selected_symptoms)
+                if predicted is None:
+                    st.warning("No matching disease found. Please select more symptoms or consult a professional.")
+                else:
+                    st.success(f"Likely Condition: {predicted}")
+                    risk_level = "High" if confidence > 0.7 else "Moderate" if confidence > 0.4 else "Low"
+                    st.info(f"Confidence: {confidence:.1%} | Risk level: {risk_level}")
+                    st.write(f"Matching symptoms: {match_count} out of {total_symptoms}")
+                    show_recommendations(predicted)
+                    platforms = get_doctor_platforms().get(predicted, [])
+                    if platforms:
+                        st.markdown("---")
+                        st.subheader("Recommended Online Doctor Platforms")
+                        render_doctor_cards(platforms)
+
+        elif selected_page == "Doctor Consultation":
+            st.header("Doctor Consultation Platforms")
+            st.write("Choose a disease below to view trusted online doctor consultation platforms.")
+            disease = st.selectbox("Select a disease", ["Diabetes", "Heart Disease", "Liver Disease", "Parkinson's Disease"])
+            platforms = get_doctor_platforms().get(disease, [])
+            render_doctor_cards(platforms)
+
+        elif selected_page == "Feedback":
+            feedback_page(st.session_state.username)
+
     else:
-        st.info("👆 Please select your symptoms above to get started with the analysis.")
+        auth_mode = st.sidebar.radio("Authentication", ["Login", "Signup"])
+        st.sidebar.markdown("---")
+        st.sidebar.write("Please login or signup to continue.")
 
-# Footer
-st.markdown("---")
-st.markdown("""
-<div style="text-align:center; padding:1.5rem 0; color:#556677;">
-    <p style="font-size:1rem; font-weight:700; color:#7b61ff;">🏥 MediPredict </p>
-    <p style="font-size:0.8rem;">Not a substitute for professional medical advice</p>
-</div>
-""", unsafe_allow_html=True)
+        if auth_mode == "Login":
+            st.subheader("Login")
+            with st.form(key="login_form"):
+                username = st.text_input("Username")
+                password = st.text_input("Password", type="password")
+                login_button = st.form_submit_button("Login")
+            if login_button:
+                if authenticate(username, password):
+                    st.session_state.logged_in = True
+                    st.session_state.username = username
+                    st.success("Login successful!")
+                else:
+                    st.error("Invalid username or password.")
+
+        else:
+            st.subheader("Signup")
+            with st.form(key="signup_form"):
+                new_username = st.text_input("Choose a username")
+                new_password = st.text_input("Choose a password", type="password")
+                signup_button = st.form_submit_button("Signup")
+            if signup_button:
+                success, message = register_user(new_username, new_password)
+                if success:
+                    st.success(message)
+                    st.info("Please switch to Login to access your account.")
+                else:
+                    st.error(message)
+
+
+if __name__ == "__main__":
+    init_storage_files()
+    main()
