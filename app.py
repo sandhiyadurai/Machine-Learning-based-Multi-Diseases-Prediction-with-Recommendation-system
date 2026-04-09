@@ -1,7 +1,5 @@
 # symptom_based_multi_disease_app.py
 import streamlit as st
-import pickle
-import pandas as pd
 import time
 
 # Set page configuration
@@ -98,7 +96,6 @@ st.markdown("""
         text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         transition: all 0.3s ease;
     }
-
     .main-header {
         font-size: 2.5rem;
         font-weight: bold;
@@ -214,31 +211,6 @@ st.markdown("""
         background: linear-gradient(135deg, #2c3e50 0%, #1a237e 100%);
     }
 
-    .input-section {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 248, 255, 0.95) 100%);
-        backdrop-filter: blur(15px);
-        padding: 2rem;
-        border-radius: 15px;
-        margin: 1rem 0;
-        border-left: 4px solid #4a90e2;
-        transition: all 0.3s ease;
-        border: 1px solid rgba(135, 206, 235, 0.2);
-        box-shadow:
-            0 4px 15px rgba(70, 130, 180, 0.08),
-            inset 0 1px 0 rgba(255, 255, 255, 0.3);
-        color: #000000; /* Dark text on light background */
-    }
-
-    .input-section p, .input-section span, .input-section div,
-    .input-section h1, .input-section h2, .input-section h3, .input-section h4 {
-        color: #000000 !important;
-    }
-    .input-section:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        background: linear-gradient(135deg, rgba(248, 249, 250, 0.95) 0%, rgba(233, 236, 239, 0.95) 100%);
-    }
-
     .prediction-result {
         background: linear-gradient(135deg, #4CAF50 0%, #45a049 50%, #66BB6A 100%);
         color: white;
@@ -299,220 +271,8 @@ st.markdown("""
         box-shadow: 0 8px 15px rgba(0,0,0,0.2);
         background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
     }
-
-    .sidebar-info {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 248, 255, 0.95) 100%);
-        backdrop-filter: blur(15px);
-        padding: 1rem;
-        border-radius: 15px;
-        margin: 1rem 0;
-        transition: all 0.3s ease;
-        border: 1px solid rgba(135, 206, 235, 0.2);
-        box-shadow:
-            0 4px 15px rgba(70, 130, 180, 0.08),
-            inset 0 1px 0 rgba(255, 255, 255, 0.3);
-        color: #000000; /* Dark text on light sidebar */
-    }
-
-    .sidebar-info p, .sidebar-info span, .sidebar-info div,
-    .sidebar-info h1, .sidebar-info h2, .sidebar-info h3, .sidebar-info h4 {
-        color: #000000 !important;
-    }
-    .sidebar-info:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 12px rgba(76, 175, 80, 0.1);
-    }
-
-    /* Column hover effects */
-    .stColumn {
-        transition: all 0.3s ease;
-    }
-    .stColumn:hover {
-        transform: translateY(-2px);
-    }
-
-    /* Checkbox hover effects */
-    .stCheckbox {
-        transition: all 0.3s ease;
-    }
-    .stCheckbox:hover {
-        transform: translateY(-1px);
-    }
-
-    /* Input field hover effects */
-    .stTextInput, .stNumberInput, .stSelectbox {
-        transition: all 0.3s ease;
-    }
-    .stTextInput:hover, .stNumberInput:hover, .stSelectbox:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-
-    /* Success message hover */
-    .stSuccess {
-        transition: all 0.3s ease;
-    }
-    .stSuccess:hover {
-        transform: translateY(-2px);
-    }
-
-    /* Warning message hover */
-    .stWarning {
-        transition: all 0.3s ease;
-    }
-    .stWarning:hover {
-        transform: translateY(-2px);
-    }
-
-    /* Error message hover */
-    .stError {
-        transition: all 0.3s ease;
-    }
-    .stError:hover {
-        transform: translateY(-2px);
-    }
-
-    /* Info message hover */
-    .stInfo {
-        transition: all 0.3s ease;
-    }
-    .stInfo:hover {
-        transform: translateY(-2px);
-    }
-
-    /* Additional text color overrides for maximum readability */
-    .stMarkdown, .stText, .stCaption, .stSubheader {
-        color: #000000 !important;
-    }
-
-    /* Black colors for form labels and help text */
-    .stSelectbox label, .stNumberInput label, .stTextInput label {
-        color: #000000 !important;
-        font-weight: 600 !important;
-    }
-
-    /* Help text color - slightly darker gray for hierarchy */
-    .stSelectbox .help, .stNumberInput .help, .stTextInput .help {
-        color: #333333 !important;
-    }
-
-    /* Sidebar text colors - all black */
-    .sidebar .stMarkdown, .sidebar p, .sidebar span, .sidebar div,
-    .sidebar h1, .sidebar h2, .sidebar h3, .sidebar h4 {
-        color: #000000 !important;
-    }
-
-    /* Error field highlighting */
-    .error-field .stNumberInput {
-        background-color: #b71c1c !important;
-        border: 2px solid #d32f2f !important;
-        border-radius: 5px;
-        color: white !important;
-    }
-    .error-field .stNumberInput input {
-        background-color: #b71c1c !important;
-        color: white !important;
-    }
 </style>
 """, unsafe_allow_html=True)
-
-# Load all models
-@st.cache_resource
-def load_model(file):
-    with open(file, "rb") as f:
-        return pickle.load(f)
-
-diabetes_model = load_model("model/diabetes_model.pkl")
-heart_model = load_model("model/heart_disease_model.pkl")
-liver_model = load_model("model/liver_disease_model.pkl")
-parkinsons_model = load_model("model/parkinsons_model.pkl")
-# model features
-MODEL_FEATURES = {
-    "Diabetes": [
-        "Pregnancies", "Glucose", "BloodPressure", "SkinThickness",
-        "Insulin", "BMI", "DiabetesPedigreeFunction", "Age"
-    ],
-    "Heart Disease": [
-        "Age", "Sex", "Chest pain type", "BP", "Cholesterol", "FBS over 120",
-        "EKG results", "Max HR", "Exercise angina", "ST depression",
-        "Slope of ST", "Number of vessels fluro", "Thallium"
-    ],
-    "Liver Disease": [
-        "Age", "Gender", "Total_Bilirubin", "Direct_Bilirubin",
-        "Alkaline_Phosphate", "SGPT", "SGOT", "Total_Protiens",
-        "Albumin", "A/G_Ratio"
-    ],
-    "Parkinson's Disease": [
-        "MDVP:Fo(Hz)", "MDVP:Fhi(Hz)", "MDVP:Flo(Hz)",
-        "MDVP:Jitter(%)", "MDVP:Jitter(Abs)", "MDVP:RAP", "MDVP:PPQ", "DDP",
-        "MDVP:Shimmer", "MDVP:Shimmer(dB)", "APQ3", "APQ5", "APQ", "DDA",
-        "NHR", "HNR", "RPDE", "DFA", "Spread1", "Spread2", "D2", "PPE"
-    ]
-}
-
-
-ZERO_OK = {
-    "Pregnancies", "SkinThickness", "Insulin", "oldpeak", "ca",
-    "MDVP:Jitter(%)", "MDVP:Jitter(Abs)", "MDVP:RAP", "MDVP:PPQ", "DDP",
-    "MDVP:Shimmer", "MDVP:Shimmer(dB)", "APQ3", "APQ5", "APQ", "DDA",
-    "NHR", "Spread1", "Spread2",
-}
-
-FIELD_LABELS = {
-    "Glucose": "Glucose Level (mg/dL)",
-    "BloodPressure": "Blood Pressure (mm Hg)",
-    "BMI": "BMI",
-    "DiabetesPedigreeFunction": "Diabetes Pedigree Function",
-    "Age": "Age (years)", "age": "Age (years)",
-    "trestbps": "Resting Blood Pressure",
-    "chol": "Cholesterol Level",
-    "thalach": "Max Heart Rate Achieved",
-    "Total_Bilirubin": "Total Bilirubin",
-    "Direct_Bilirubin": "Direct Bilirubin",
-    "Alkaline_Phosphate": "Alkaline Phosphatase",
-    "SGPT": "SGPT / ALT", "SGOT": "SGOT / AST",
-    "Total_Protiens": "Total Protein",
-    "Albumin": "Albumin", "A/G_Ratio": "Albumin / Globulin Ratio",
-    "MDVP:Fo(Hz)": "MDVP: Fo (Hz)",
-    "MDVP:Fhi(Hz)": "MDVP: Fhi (Hz)",
-    "MDVP:Flo(Hz)": "MDVP: Flo (Hz)",
-    "HNR": "HNR", "RPDE": "RPDE", "DFA": "DFA", "D2": "D2", "PPE": "PPE",
-}
-
-def get_missing(inputs):
-    return [k for k, v in inputs.items()
-            if isinstance(v, (int, float)) and v == 0 and k not in ZERO_OK]
-
-def show_field_error(key):
-    label = FIELD_LABELS.get(key, key)
-    st.markdown(
-        f'<span style="color:#e53935; font-size:0.78rem; font-weight:600; display:block; margin-top:-0.3rem; margin-bottom:0.4rem;">⚠ Please enter a value for <b>{label}</b></span>',
-        unsafe_allow_html=True
-    )
-
-def show_missing_banner(missing_keys):
-    pills = "".join(
-        f'<span style="background:#ffebee; border:1px solid #ef9a9a; color:#c62828; padding:0.22rem 0.8rem; border-radius:50px; font-size:0.76rem; font-weight:600; margin:2px;">'
-        f'📌 {FIELD_LABELS.get(k, k)}</span>'
-        for k in missing_keys
-    )
-    n = len(missing_keys)
-    st.markdown(f"""
-    <div style="background:#fff5f5; border:1.5px solid #e53935; border-left:5px solid #c62828; border-radius:12px; padding:1rem 1.4rem; margin:1rem 0;">
-        <h4 style="color:#c62828; margin:0 0 0.4rem;">🚨 {n} field{'s' if n>1 else ''} {'are' if n>1 else 'is'} missing</h4>
-        <p style="color:#b71c1c; font-size:0.82rem; margin-bottom:0.6rem;">Please fill in all highlighted fields before predicting:</p>
-        <div style="display:flex; flex-wrap:wrap; gap:0.4rem;">{pills}</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-def create_number_input(key, label, min_val, max_val, help=None, step=None):
-    if key in st.session_state.get("flagged_fields", set()):
-        st.markdown('<div class="error-field">', unsafe_allow_html=True)
-        val = st.number_input(label, min_val, max_val, help=help, step=step)
-        st.markdown('</div>', unsafe_allow_html=True)
-    else:
-        val = st.number_input(label, min_val, max_val, help=help, step=step)
-    return val
 
 # Disease recommendations with more detailed advice
 recommendations = {
@@ -568,6 +328,7 @@ recommendations = {
         ]
     }
 }
+
 # ─── Doctor referral platforms ───────────────────────────────────────────────
 doctor_platforms = {
     "Diabetes": [
@@ -610,7 +371,7 @@ with st.sidebar:
     st.markdown("""
     <div class="sidebar-info">
     <h4>🔬 How It Works</h4>
-    <p>This AI-powered system uses machine learning models trained on medical datasets to predict potential diseases based on your symptoms and medical parameters.</p>
+    <p>This AI-powered system uses symptom-based analysis to predict potential diseases and provide personalized health recommendations.</p>
 
     <h4>⚠️ Important Disclaimer</h4>
     <p><strong>This is not a substitute for professional medical advice.</strong> Always consult with qualified healthcare professionals for accurate diagnosis and treatment.</p>
@@ -619,70 +380,71 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown("### 🏥 Supported Diseases")
-    diseases = ["Diabetes", "Heart Disease", "Liver Disease", ]
+    diseases = ["Diabetes", "Heart Disease", "Liver Disease", "Parkinson's Disease"]
     for disease in diseases:
         st.markdown(f"• {disease}")
 
 # Main content
 st.markdown('<h1 class="main-header">🏥 Multi-Disease Prediction & Recommendation System</h1>', unsafe_allow_html=True)
-st.markdown('<p style="text-align: center; font-size: 1.2rem; color: #666; margin-bottom: 2rem;">Select your symptoms and provide medical details for AI-powered disease prediction and personalized recommendations</p>', unsafe_allow_html=True)
+st.markdown('<p style="text-align: center; font-size: 1.2rem; color: #666; margin-bottom: 2rem;">Select your symptoms and get AI-powered disease prediction with personalized recommendations</p>', unsafe_allow_html=True)
 
 # Symptom selection with better UI
-st.markdown("### 🎯 Step 1: Select Your Symptoms")
+st.markdown("### 🎯 Select Your Symptoms")
 st.markdown("Choose all symptoms you're experiencing:")
 
 col1, col2, col3, col4 = st.columns(4)
 
 symptoms_data = {
-    "SET 01": [
+    "Diabetes": [
         "Fatigue", "Frequent urination", "High glucose", "Excessive thirst",
         "Blurred vision", "Slow-healing wounds", "Unexplained weight loss",
         "Tingling in hands/feet", "Frequent infections", "Dry skin",
         "Increased hunger", "Darkened skin patches", "Fruity breath odor"
     ],
-    "SET 02": [
+    "Heart Disease": [
         "Chest pain", "Shortness of breath", "High cholesterol", "Palpitations",
         "Swollen ankles/feet", "Dizziness or lightheadedness", "Persistent cough",
         "Fatigue during activity", "Irregular heartbeat", "Pain in arm/shoulder",
         "Cold sweats", "Nausea with chest discomfort", "Jaw or neck pain"
     ],
-    "SET 03": [
+    "Liver Disease": [
         "Jaundice", "Nausea", "Abdominal pain", "Dark urine",
         "Pale stool color", "Loss of appetite", "Easy bruising",
         "Spider-like blood vessels", "Itchy skin", "Leg swelling",
         "Confusion or forgetfulness", "Vomiting blood", "Abdominal swelling (ascites)"
     ],
-    "SET 04": [
+    "Parkinson's": [
         "Tremors", "Voice changes", "Stiffness", "Loss of balance",
         "Slow movement (bradykinesia)", "Mask-like facial expression",
         "Micrographia (small handwriting)", "Sleep disturbances",
         "Reduced arm swing while walking", "Constipation",
-        "Loss of smell", "Depression or anxiety", "Drooling"]
+        "Loss of smell", "Depression or anxiety", "Drooling"
+    ]
 }
 
 selected_symptoms = []
 
 with col1:
-    st.markdown("**🍬 Symptoms Set 01**")
-    for symptom in symptoms_data["SET 01"]:
+    st.markdown("**🍬 Diabetes Symptoms**")
+    for symptom in symptoms_data["Diabetes"]:
         if st.checkbox(symptom, key=f"diabetes_{symptom}"):
             selected_symptoms.append(symptom)
 
 with col2:
-    st.markdown("**❤️ Symptoms Set 02**")
-    for symptom in symptoms_data["SET 02"]:
+    st.markdown("**❤️ Heart Disease Symptoms**")
+    for symptom in symptoms_data["Heart Disease"]:
         if st.checkbox(symptom, key=f"heart_{symptom}"):
             selected_symptoms.append(symptom)
 
 with col3:
-    st.markdown("**🫀 Symptoms Set 03**")
-    for symptom in symptoms_data["SET 03"]:
+    st.markdown("**🫀 Liver Disease Symptoms**")
+    for symptom in symptoms_data["Liver Disease"]:
         if st.checkbox(symptom, key=f"liver_{symptom}"):
             selected_symptoms.append(symptom)
 
 with col4:
-    st.markdown("**🧠 Symptoms Set 04**")
-    for symptom in symptoms_data["SET 04"]:
+    st.markdown("**🧠 Parkinson's Symptoms**")
+    for symptom in symptoms_data["Parkinson's"]:
         if st.checkbox(symptom, key=f"parkinsons_{symptom}"):
             selected_symptoms.append(symptom)
 
@@ -694,243 +456,108 @@ if selected_symptoms:
 
 # Determine possible disease based on symptoms
 disease_predicted = None
-numeric_inputs = {}
-model = None
 
-# Disease detection logic
+# Disease detection logic - simplified symptom-based prediction
 if selected_symptoms:
-    if any(symptom in selected_symptoms for symptom in symptoms_data["SET 01"]):
-        disease_predicted = "Diabetes"
-        model = diabetes_model
-    elif any(symptom in selected_symptoms for symptom in symptoms_data["SET 02"]):
-        disease_predicted = "Heart Disease"
-        model = heart_model
-    elif any(symptom in selected_symptoms for symptom in symptoms_data["SET 03"]):
-        disease_predicted = "Liver Disease"
-        model = liver_model
-    elif any(symptom in selected_symptoms for symptom in symptoms_data["SET 04"]):
-        disease_predicted = "Parkinson's Disease"
-        model = parkinsons_model
+    # Count symptoms per disease
+    diabetes_count = sum(1 for s in selected_symptoms if s in symptoms_data["Diabetes"])
+    heart_count = sum(1 for s in selected_symptoms if s in symptoms_data["Heart Disease"])
+    liver_count = sum(1 for s in selected_symptoms if s in symptoms_data["Liver Disease"])
+    parkinsons_count = sum(1 for s in selected_symptoms if s in symptoms_data["Parkinson's"])
 
-# Show disease prediction and input form
+    # Find disease with most matching symptoms
+    counts = {
+        "Diabetes": diabetes_count,
+        "Heart Disease": heart_count,
+        "Liver Disease": liver_count,
+        "Parkinson's Disease": parkinsons_count
+    }
+
+    max_count = max(counts.values())
+    if max_count > 0:
+        # Get diseases with max count, prefer the first one if tie
+        candidates = [d for d, c in counts.items() if c == max_count]
+        disease_predicted = candidates[0]
+
+# Show disease prediction and recommendations
 if disease_predicted:
     st.markdown("---")
     st.markdown(f'<div class="disease-card"><h3>🎯 Detected Condition: {disease_predicted}</h3><p>{recommendations[disease_predicted]["description"]}</p></div>', unsafe_allow_html=True)
 
-    st.markdown("### 📝 Step 2: Provide Medical Details")
-    st.markdown('<div class="input-section">', unsafe_allow_html=True)
-
-    if disease_predicted == "Diabetes":
-        st.markdown("**Please provide the following diabetes-related measurements:**")
-
-        col1, col2 = st.columns(2)
-        with col1:
-            numeric_inputs["Pregnancies"] = create_number_input("Pregnancies", "Number of Pregnancies", -1, 20, help="Number of times pregnant")
-            numeric_inputs["Glucose"] = create_number_input("Glucose", "Glucose Level (mg/dL)", 0, 200, help="Plasma glucose concentration")
-            numeric_inputs["BloodPressure"] = create_number_input("BloodPressure", "Blood Pressure (mm Hg)", 0, 140, help="Diastolic blood pressure")
-            numeric_inputs["SkinThickness"] = create_number_input("SkinThickness", "Skin Thickness (mm)", 0, 100, help="Triceps skin fold thickness")
-
-        with col2:
-            numeric_inputs["Insulin"] = create_number_input("Insulin", "Insulin Level (mu U/ml)", 0, 900, help="2-Hour serum insulin")
-            numeric_inputs["BMI"] = create_number_input("BMI", "BMI", 0.0, 70.0, help="Body mass index")
-            numeric_inputs["DiabetesPedigreeFunction"] = create_number_input("DiabetesPedigreeFunction", "Diabetes Pedigree Function", 0.0, 3.0, help="Diabetes pedigree function")
-            numeric_inputs["Age"] = create_number_input("Age", "Age (years)", 1, 120, help="Age in years")
-
-    elif disease_predicted == "Heart Disease":
-        st.markdown("**Please provide the following cardiac measurements:**")
-
-        col1, col2 = st.columns(2)
-        with col1:
-            numeric_inputs["Age"] = create_number_input("Age", "Age (years)", 1, 120)
-            numeric_inputs["Sex"] = st.selectbox("Sex", ["Male", "Female"], help="Biological sex")
-            numeric_inputs["Chest pain type"] = st.selectbox("Chest Pain Type", [
-                "Typical Angina", "Atypical Angina", "Non-anginal Pain", "Asymptomatic"
-            ], help="Type of chest pain experienced")
-            numeric_inputs["BP"] = create_number_input("BP", "Resting Blood Pressure (mm Hg)", 0, 200, help="Resting blood pressure")
-            numeric_inputs["Cholesterol"] = create_number_input("Cholesterol", "Cholesterol Level (mg/dL)", 0, 600, help="Serum cholesterol")
-            numeric_inputs["FBS over 120"] = st.selectbox("Fasting Blood Sugar > 120 mg/dl", ["No", "Yes"], help="Fasting blood sugar > 120 mg/dl")
-            numeric_inputs["EKG results"] = st.selectbox("Resting ECG Results", [
-                "Normal", "ST-T wave abnormality", "Left ventricular hypertrophy"
-            ], help="Resting electrocardiographic results")
-
-        with col2:
-            numeric_inputs["Max HR"] = create_number_input("Max HR", "Max Heart Rate Achieved", 0, 250, help="Maximum heart rate achieved")
-            numeric_inputs["Exercise angina"] = st.selectbox("Exercise Induced Angina", ["No", "Yes"], help="Exercise induced angina")
-            numeric_inputs["ST depression"] = create_number_input("ST depression", "ST Depression", 0.0, 10.0, help="ST depression induced by exercise")
-            numeric_inputs["Slope of ST"] = st.selectbox("Slope of Peak Exercise ST Segment", [
-                "Upsloping", "Flat", "Downsloping"
-            ], help="Slope of the peak exercise ST segment")
-            numeric_inputs["Number of vessels fluro"] = create_number_input("Number of vessels fluro", "Number of Major Vessels", 0, 3, help="Number of major vessels colored by fluoroscopy")
-            numeric_inputs["Thallium"] = st.selectbox("Thalassemia", [
-                "Normal", "Fixed defect", "Reversible defect"
-            ], help="Thalassemia status")
-
-        # Convert categorical inputs to numeric
-        sex_map = {"Male": 1, "Female": 0}
-        cp_map = {"Typical Angina": 4, "Atypical Angina": 3, "Non-anginal Pain": 2, "Asymptomatic": 1}
-        fbs_map = {"No": 0, "Yes": 1}
-        restecg_map = {"Normal": 0, "ST-T wave abnormality": 1, "Left ventricular hypertrophy": 2}
-        exang_map = {"No": 0, "Yes": 1}
-        slope_map = {"Upsloping": 1, "Flat": 2, "Downsloping": 3}
-        thal_map = {"Normal": 3, "Fixed defect": 6, "Reversible defect": 7}
-
-        numeric_inputs["Sex"] = sex_map[numeric_inputs["Sex"]]
-        numeric_inputs["Chest pain type"] = cp_map[numeric_inputs["Chest pain type"]]
-        numeric_inputs["FBS over 120"] = fbs_map[numeric_inputs["FBS over 120"]]
-        numeric_inputs["EKG results"] = restecg_map[numeric_inputs["EKG results"]]
-        numeric_inputs["Exercise angina"] = exang_map[numeric_inputs["Exercise angina"]]
-        numeric_inputs["Slope of ST"] = slope_map[numeric_inputs["Slope of ST"]]
-        numeric_inputs["Thallium"] = thal_map[numeric_inputs["Thallium"]]
-
-
-    elif disease_predicted == "Liver Disease":
-        st.markdown("**Please provide the following liver function test results:**")
-
-        col1, col2 = st.columns(2)
-        with col1:
-            numeric_inputs["age"] = create_number_input("age", "Age (years)", 1, 120)
-            numeric_inputs["Gender"] = st.selectbox("Gender", ["Male", "Female"])
-            numeric_inputs["Total_Bilirubin"] = create_number_input("Total_Bilirubin", "Total Bilirubin (mg/dL)", 0.0, 20.0, help="Total bilirubin level")
-            numeric_inputs["Direct_Bilirubin"] = create_number_input("Direct_Bilirubin", "Direct Bilirubin (mg/dL)", 0.0, 10.0, help="Direct bilirubin level")
-            numeric_inputs["Alkaline_Phosphate"] = create_number_input("Alkaline_Phosphate", "Alkaline Phosphate (IU/L)", 0, 500, help="Alkaline phosphatase level")
-
-        with col2:
-            numeric_inputs["SGPT"] = create_number_input("SGPT", "SGPT/ALT (IU/L)", 0, 500, help="Serum glutamic pyruvic transaminase")
-            numeric_inputs["SGOT"] = create_number_input("SGOT", "SGOT/AST (IU/L)", 0, 500, help="Serum glutamic oxaloacetic transaminase")
-            numeric_inputs["Total_Protiens"] = create_number_input("Total_Protiens", "Total Protein (g/dL)", 0.0, 15.0, help="Total protein level")
-            numeric_inputs["Albumin"] = create_number_input("Albumin", "Albumin (g/dL)", 0.0, 10.0, help="Albumin level")
-            numeric_inputs["A/G_Ratio"] = create_number_input("A/G_Ratio", "Albumin/Globulin Ratio", 0.0, 3.0, help="Albumin to globulin ratio")
-
-        # Convert gender to numeric
-        gender_map = {"Male": 1, "Female": 0}
-        numeric_inputs["Gender"] = gender_map[numeric_inputs["Gender"]]
-
-    elif disease_predicted == "Parkinson's Disease":
-        st.markdown("**Please provide the following voice analysis measurements:**")
-        st.info("💡 These measurements typically come from specialized voice analysis software used by neurologists.")
-
-        col1, col2 = st.columns(2)
-        with col1:
-            numeric_inputs["MDVP:Fo(Hz)"] = create_number_input("MDVP:Fo(Hz)", "MDVP:Fo(Hz)", 0.0, 500.0)
-            numeric_inputs["MDVP:Fhi(Hz)"] = create_number_input("MDVP:Fhi(Hz)", "MDVP:Fhi(Hz)", 0.0, 500.0)
-            numeric_inputs["MDVP:Flo(Hz)"] = create_number_input("MDVP:Flo(Hz)", "MDVP:Flo(Hz)", 0.0, 500.0)
-            numeric_inputs["MDVP:Jitter(%)"] = create_number_input("MDVP:Jitter(%)", "Jitter(%)", 0.0, 1.0)
-            numeric_inputs["MDVP:Jitter(Abs)"] = create_number_input("MDVP:Jitter(Abs)", "Jitter(Abs)", 0.0, 1.0)
-            numeric_inputs["MDVP:RAP"] = create_number_input("MDVP:RAP", "RAP", 0.0, 1.0)
-            numeric_inputs["MDVP:PPQ"] = create_number_input("MDVP:PPQ", "PPQ", 0.0, 1.0)
-            numeric_inputs["DDP"] = create_number_input("DDP", "DDP", 0.0, 1.0)
-            numeric_inputs["MDVP:Shimmer"] = create_number_input("MDVP:Shimmer", "Shimmer", 0.0, 1.0)
-            numeric_inputs["MDVP:Shimmer(dB)"] = create_number_input("MDVP:Shimmer(dB)", "Shimmer(dB)", 0.0, 5.0)
-            numeric_inputs["APQ3"] = create_number_input("APQ3", "APQ3", 0.0, 1.0)
-
-        with col2:
-            numeric_inputs["APQ5"] = create_number_input("APQ5", "APQ5", 0.0, 1.0)
-            numeric_inputs["APQ"] = create_number_input("APQ", "APQ", 0.0, 1.0)
-            numeric_inputs["DDA"] = create_number_input("DDA", "DDA", 0.0, 1.0)
-            numeric_inputs["NHR"] = create_number_input("NHR", "NHR", 0.0, 1.0)
-            numeric_inputs["HNR"] = create_number_input("HNR", "HNR", 0.0, 50.0)
-            numeric_inputs["RPDE"] = create_number_input("RPDE", "RPDE", 0.0, 2.0)
-            numeric_inputs["DFA"] = create_number_input("DFA", "DFA", 0.0, 2.0)
-            numeric_inputs["Spread1"] = create_number_input("Spread1", "Spread1", -10.0, 10.0)
-            numeric_inputs["Spread2"] = create_number_input("Spread2", "Spread2", -10.0, 10.0)
-            numeric_inputs["D2"] = create_number_input("D2", "D2", 0.0, 5.0)
-            numeric_inputs["PPE"] = create_number_input("PPE", "PPE", 0.0, 2.0)
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
     # Prediction section
-    st.markdown("### 🔍 Step 3: Get Prediction")
+    st.markdown("### 🔍 Get Analysis & Recommendations")
     col1, col2, col3 = st.columns([1,2,1])
     with col2:
-        predict_button = st.button("🔮 Predict Disease", use_container_width=True)
-    
-    if predict_button:
-        missing = get_missing(numeric_inputs)
-        if missing:
-            st.session_state["flagged_fields"] = set(missing)
-            show_missing_banner(missing)
-            st.rerun()
-        else:
-            st.session_state["flagged_fields"] = set()
-            with st.spinner("🔄 Analyzing your data..."):
-                time.sleep(1.5)
-            cols     = MODEL_FEATURES[disease_predicted]
-            input_df = pd.DataFrame([[numeric_inputs[c] for c in cols]], columns=cols)
+        analyze_button = st.button("🔮 Analyze Symptoms", use_container_width=True)
 
-            prediction = model.predict(input_df)
-            prediction_proba = model.predict_proba(input_df)[0]
+    if analyze_button:
+        with st.spinner("🔄 Analyzing your symptoms..."):
+            time.sleep(1.5)
 
-            if disease_predicted == "Diabetes":
-                result = "Positive (Has Diabetes)" if prediction[0] == 1 else "Negative (No Diabetes)"
-                confidence = prediction_proba[1] if prediction[0] == 1 else prediction_proba[0]
-            elif disease_predicted == "Heart Disease":
-                result = "Positive (Has Heart Disease)" if prediction[0] == 1 else "Negative (No Heart Disease)"
-                confidence = prediction_proba[1] if prediction[0] == 1 else prediction_proba[0]
-            elif disease_predicted == "Liver Disease":
-                result = "Positive (Has Liver Disease)" if prediction[0] == 1 else "Negative (No Liver Disease)"
-                confidence = prediction_proba[1] if prediction[0] == 1 else prediction_proba[0]
-            else:  # Parkinson's
-                result = "Positive (Has Parkinson's)" if prediction[0] == 1 else "Negative (No Parkinson's)"
-                confidence = prediction_proba[1] if prediction[0] == 1 else prediction_proba[0]
+        # Calculate confidence based on symptom count
+        symptom_count = sum(1 for s in selected_symptoms if s in symptoms_data[disease_predicted])
+        total_symptoms = len(symptoms_data[disease_predicted])
+        confidence = min(0.95, symptom_count / total_symptoms * 0.8 + 0.2)  # Cap at 95%, minimum 20%
 
-            st.markdown(f'''
-            <div class="prediction-result">
-                <h2>🎯 Prediction Result</h2>
-                <h3>{result}</h3>
-                <p><strong>Confidence: {confidence:.1%}</strong></p>
-                <p>Disease: {disease_predicted}</p>
-            </div>
-            ''', unsafe_allow_html=True)
+        result = f"Potential {disease_predicted} Detected"
+        risk_level = "High" if confidence > 0.7 else "Moderate" if confidence > 0.5 else "Low"
 
-            # Recommendations
-            st.markdown("### 💡 Personalized Recommendations")
-            st.markdown(f'<div class="recommendation-box"><h4>📋 Recommended Actions for {disease_predicted}:</h4></div>', unsafe_allow_html=True)
+        st.markdown(f'''
+        <div class="prediction-result">
+            <h2>🎯 Analysis Result</h2>
+            <h3>{result}</h3>
+            <p><strong>Risk Level: {risk_level}</strong></p>
+            <p>Confidence: {confidence:.1%}</p>
+            <p>Matching Symptoms: {symptom_count} out of {total_symptoms}</p>
+        </div>
+        ''', unsafe_allow_html=True)
 
-            for advice in recommendations[disease_predicted]["advice"]:
-                st.markdown(f"• {advice}")
+        # Recommendations
+        st.markdown("### 💡 Personalized Health Recommendations")
+        st.markdown(f'<div class="recommendation-box"><h4>📋 Recommended Actions for {disease_predicted}:</h4></div>', unsafe_allow_html=True)
 
-            st.markdown("---")
-            st.warning("⚠️ **Important:** This prediction is for informational purposes only. Please consult a healthcare professional for proper diagnosis and treatment.")
+        for advice in recommendations[disease_predicted]["advice"]:
+            st.markdown(f"• {advice}")
 
-            # ─── Doctor Referral Section ──────────────────────────────────────────
-            st.markdown("---")
-            specialist = recommendations[disease_predicted]["specialist"]
-            platforms = doctor_platforms.get(disease_predicted, [])
+        st.markdown("---")
+        st.warning("⚠️ **Important:** This analysis is for informational purposes only. Please consult a healthcare professional for proper diagnosis and treatment.")
 
+        # ─── Doctor Referral Section ──────────────────────────────────────────
+        st.markdown("---")
+        specialist = recommendations[disease_predicted]["specialist"]
+        platforms = doctor_platforms.get(disease_predicted, [])
+
+        st.markdown(f"""
+        <div class="doctor-section">
+            <h3>👨‍⚕️ Consult a {specialist} Online</h3>
+            <p>Based on your symptoms, we recommend consulting a qualified {specialist}.
+            Below are trusted telemedicine platforms where you can book an online consultation from the comfort of your home.</p>
+            <div class="doctor-grid">
+        """, unsafe_allow_html=True)
+
+        for p in platforms:
             st.markdown(f"""
-            <div class="doctor-section">
-                <h3>👨‍⚕️ Consult a {specialist} Online</h3>
-                <p>Based on your results, we recommend consulting a qualified {specialist}. 
-                Below are trusted telemedicine platforms where you can book an online consultation from the comfort of your home.</p>
-                <div class="doctor-grid">
+                <div class="doctor-card">
+                    <div class="specialty-tag">{p['specialty']}</div>
+                    <div class="platform-name">{p['name']}</div>
+                    <div class="platform-desc">{p['desc']}</div>
+                    <a href="{p['url']}" target="_blank" class="visit-btn">Book Now →</a>
+                </div>
             """, unsafe_allow_html=True)
 
-            for p in platforms:
-                st.markdown(f"""
-                    <div class="doctor-card">
-                        <div class="specialty-tag">{p['specialty']}</div>
-                        <div class="platform-name">{p['name']}</div>
-                        <div class="platform-desc">{p['desc']}</div>
-                        <a href="{p['url']}" target="_blank" class="visit-btn">Book Now →</a>
-                    </div>
-                """, unsafe_allow_html=True)
-            
-            st.markdown("</div></div>", unsafe_allow_html=True)
-
-    else:
-        st.error("❌ Please fill in all the required medical parameters before making a prediction.")
+        st.markdown("</div></div>", unsafe_allow_html=True)
 
 else:
     if selected_symptoms:
-        st.warning("🤔 The selected symptoms don't match any disease in our current database. Please try selecting different symptoms or consult a healthcare professional.")
+        st.warning("🤔 The selected symptoms don't strongly match any disease in our database. Please try selecting different symptoms or consult a healthcare professional.")
     else:
-        st.info("👆 Please select your symptoms above to get started with the prediction process.")
+        st.info("👆 Please select your symptoms above to get started with the analysis.")
 
 # Footer
 st.markdown("---")
 st.markdown("""
 <div style="text-align:center; padding:1.5rem 0; color:#556677;">
     <p style="font-size:1rem; font-weight:700; color:#7b61ff;">🏥 MediPredict </p>
-    <p style="font-size:0.8rem;">Powered by Sandhiya -Rakshantha-Kaviya &nbsp;|&nbsp; Not a substitute for professional medical advice</p>
+    <p style="font-size:0.8rem;">Powered by Symptom Analysis &nbsp;|&nbsp; Built with ❤️ &nbsp;|&nbsp; Not a substitute for professional medical advice</p>
 </div>
 """, unsafe_allow_html=True)
