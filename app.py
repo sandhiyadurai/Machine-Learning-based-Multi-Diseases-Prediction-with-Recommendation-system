@@ -379,7 +379,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     st.markdown("---")
-    st.markdown("### 🏥 Supported Diseases")
+    st.markdown("### 🏥 Supported Disease")
     diseases = ["Diabetes", "Heart Disease", "Liver Disease", "Parkinson's Disease"]
     for disease in diseases:
         st.markdown(f"• {disease}")
@@ -425,25 +425,25 @@ symptoms_data = {
 selected_symptoms = []
 
 with col1:
-    st.markdown("**🍬 Diabetes Symptoms**")
+    st.markdown("**Symptoms**")
     for symptom in symptoms_data["Diabetes"]:
         if st.checkbox(symptom, key=f"diabetes_{symptom}"):
             selected_symptoms.append(symptom)
 
 with col2:
-    st.markdown("**❤️ Heart Disease Symptoms**")
+    st.markdown("**Symptoms**")
     for symptom in symptoms_data["Heart Disease"]:
         if st.checkbox(symptom, key=f"heart_{symptom}"):
             selected_symptoms.append(symptom)
 
 with col3:
-    st.markdown("**🫀 Liver Disease Symptoms**")
+    st.markdown("**Symptoms**")
     for symptom in symptoms_data["Liver Disease"]:
         if st.checkbox(symptom, key=f"liver_{symptom}"):
             selected_symptoms.append(symptom)
 
 with col4:
-    st.markdown("**🧠 Parkinson's Symptoms**")
+    st.markdown("**Symptoms**")
     for symptom in symptoms_data["Parkinson's"]:
         if st.checkbox(symptom, key=f"parkinsons_{symptom}"):
             selected_symptoms.append(symptom)
