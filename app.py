@@ -544,6 +544,17 @@ def main():
                     st.write(f"Matching symptoms: {match_count} out of {total_symptoms}")
                     show_recommendations(predicted)
                     platforms = get_doctor_platforms().get(predicted, [])
+                    save_prediction_to_history(
+                    username=st.session_state.username,
+                    disease=predicted,
+                    inputs={"Symptoms": ", ".join(selected_symptoms)},
+                    result=predicted,
+                    confidence=confidence
+                    )
+
+                    show_recommendations(predicted)
+                    platforms = get_doctor_platforms().get(predicted, [])
+                           
                     if platforms:
                         st.markdown("---")
                         st.subheader("Recommended Online Doctor Platforms")
