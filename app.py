@@ -419,7 +419,57 @@ def feedback_page(username):
             save_feedback(username, name, message)
             st.success("Thank you! Your feedback has been submitted.")
             st.info("Feedback is stored securely for review.")
+def history_page(username):
+    st.header("📋 Prediction History")
+    history = load_history()
+    user_history = history.get(username, [])
 
+    if not user_history:
+        st.info("No predictions made yet. Go to Disease Prediction to get started.")
+        return
+
+    col1, col2 = st.columns(2)
+    col1.metric("Total Predictions", len(user_history))
+    diseases = [h["disease"] for h in user_history]
+    col2.metric("Most Checked", max(set(diseases), key=diseases.count))
+
+    st.markdown("---")
+
+    disease_filter = st.selectbox(
+        "Filter by Disease",
+        ["All"] + list(set(diseases))
+    )
+
+    filtered = user_history if disease_filter == "All" else [
+        h for h in user_history if h["disease"] == disease_filter
+    ]
+
+    for entry in reversed(filtered):
+        with st.expander(f"🔍 {entry['disease']} — {entry['timestamp']}"):
+            st.write(f"**Result:** {entry['result']}")
+            st.write(f"**Confidence:** {entry['confidence']}")
+            st.markdown("**Key Inputs:**")
+            for k, v in entry["inputs"].items():
+                st.write(f"- {k}: {v}")
+
+    if st.button("⬇️ Export History as CSV"):
+        rows = []
+        for entry in filtered:
+            row = {
+                "Timestamp": entry["timestamp"],
+                "Disease": entry["disease"],
+                "Result": entry["result"],
+                "Confidence": entry["confidence"],
+            }
+            row.update(entry["inputs"])
+            rows.append(row)
+        df = pd.DataFrame(rows)
+        st.download_button(
+            "Download CSV",
+            df.to_csv(index=False),
+            file_name=f"{username}_history.csv",
+            mime="text/csv"
+        )
 
 def main():
     st.set_page_config(page_title="Multi-Disease Prediction App", page_icon="🏥", layout="wide")
