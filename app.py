@@ -47,7 +47,27 @@ def load_users():
 def save_users(users):
     with open(USER_FILE, "w", encoding="utf-8") as f:
         json.dump({"users": users}, f, indent=2)
+def load_history():
+    if not os.path.exists(HISTORY_FILE):
+        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+            json.dump({}, f)
+    with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
 
+
+def save_prediction_to_history(username, disease, inputs, result, confidence):
+    history = load_history()
+    if username not in history:
+        history[username] = []
+    history[username].append({
+        "disease": disease,
+        "inputs": inputs,
+        "result": result,
+        "confidence": f"{confidence:.1%}",
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+    with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+        json.dump(history, f, indent=2)
 
 def authenticate(username: str, password: str) -> bool:
     users = load_users()
@@ -411,7 +431,7 @@ def main():
         st.session_state.username = ""
 
     if st.session_state.logged_in:
-        sidebar_options = ["Dashboard", "Disease Prediction", "Doctor Consultation", "Feedback"]
+        sidebar_options = ["Dashboard", "Disease Prediction", "Doctor Consultation", "Feedback","History"]
         selected_page = st.sidebar.selectbox("Menu", sidebar_options)
         st.sidebar.markdown("---")
         st.sidebar.write(f"**Logged in as:** {st.session_state.username}")
@@ -485,8 +505,11 @@ def main():
             platforms = get_doctor_platforms().get(disease, [])
             render_doctor_cards(platforms)
 
+        elif selected_page == "History":
+             history_page(st.session_state.username)
+
         elif selected_page == "Feedback":
-            feedback_page(st.session_state.username)
+             feedback_page(st.session_state.username)
 
     else:
         auth_mode = st.sidebar.radio("Authentication", ["Login", "Signup"])
