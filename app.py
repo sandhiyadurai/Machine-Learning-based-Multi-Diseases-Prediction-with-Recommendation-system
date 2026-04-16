@@ -13,6 +13,7 @@ import numpy as np
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 USER_FILE = os.path.join(BASE_DIR, "users.json")
 FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.csv")
+HISTORY_FILE = os.path.join(BASE_DIR, "history.json")
 MODEL_DIR = os.path.join(BASE_DIR, "model")
 DIABETES_MODEL_PATH = os.path.join(MODEL_DIR, "diabetes_model.pkl")
 HEART_MODEL_PATH = os.path.join(MODEL_DIR, "heart_disease_model.pkl")
