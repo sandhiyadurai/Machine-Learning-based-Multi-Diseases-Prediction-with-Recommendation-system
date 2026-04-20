@@ -474,7 +474,7 @@ def history_page(username):
 
 def main():
     st.set_page_config(page_title="Multi-Disease Prediction App", page_icon="🏥", layout="wide")
-    st.markdown("# 🩺 Multi-Disease Prediction Web App")
+    st.markdown("# 🩺 Multi-Disease Prediction with Personalized health recommendation system")
     st.markdown("Welcome to the healthcare dashboard. Signup or login to begin using disease prediction and consultation features.")
 
     if "logged_in" not in st.session_state:
